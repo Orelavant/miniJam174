@@ -3,200 +3,94 @@ if arg[2] == "debug" then
 	require("lldebugger").start()
 end
 
--- Local vars
-local ScreenWidth = love.graphics.getWidth()
-local ScreenHeight = love.graphics.getHeight()
+-- Global variables for physics world and objects
+local world
+local circle
+local rectangle
+local circleShape, rectangleShape
+local circleFixture, rectangleFixture
 
-local PartyRadius = 25
-local PartySpeed = 150
-
-local FenceWidth = 40
-local FenceHeight = 5
-
-local ProjectileRadius = 10
-local ProjectileSpeed = 200
-
--- Callbacks
 function love.load()
-	-- Settings
-	love.mouse.setVisible(false)
+    -- Initialize the physics world with no gravity (top-down)
+    world = love.physics.newWorld(0, 0, true) -- No gravity (0, 0)
 
-	-- Globals
-	TableOfCircles = {}
+    -- Create a circle body and shape (dynamic, so it can move)
+    circle = love.physics.newBody(world, 400, 300, "dynamic") -- Position (400, 300), "dynamic" means it can move
+    circleShape = love.physics.newCircleShape(30) -- Radius 30
+    circleFixture = love.physics.newFixture(circle, circleShape)
 
-	-- Party
-	Party = spawnMovCircle(ScreenWidth / 2, ScreenHeight / 2, randFloat(), randFloat(), PartyRadius, PartySpeed)
+    -- Set initial constant velocity for the circle (move right at 100 pixels per second)
+    circle:setLinearVelocity(100, 0)  -- 100 pixels per second to the right
 
-	-- Fence
-	Fence = {x=10, y=10, width=FenceWidth, height=FenceHeight}
+    -- Create a rectangle body and shape (kinematic, so we move it manually with the mouse)
+    rectangle = love.physics.newBody(world, 400, 500, "kinematic") -- Position (400, 500), "kinematic" means it can be moved manually
+    rectangleShape = love.physics.newRectangleShape(100, 20) -- Width 100, Height 20
+    rectangleFixture = love.physics.newFixture(rectangle, rectangleShape)
 
-	table.insert(TableOfCircles, Party)
+    -- Set restitution (bounciness) of the circle
+    circleFixture:setRestitution(0.8) -- 0.8 means a pretty bouncy circle
+
+    -- Disable collision between circle and rectangle by setting collision groups
+    -- Both the circle and the rectangle will belong to different collision groups
+    rectangleFixture:setCategory(2)  -- Assign to group 2
+    circleFixture:setCategory(1)     -- Assign to group 1
+    circleFixture:setMask(2)         -- Only collide with group 2 (rectangle)
 end
 
 function love.update(dt)
-	-- Fence follows mouse
-	mouse_x, mouse_y = love.mouse.getPosition()
-	Fence.x = mouse_x - (Fence.width / 2)
-	Fence.y = mouse_y - (Fence.height / 2)
+    -- Update the physics world (circle maintains its velocity)
+    world:update(dt)
 
-	-- Update all circles
-	updateCircles(TableOfCircles, dt)
+    -- Move the rectangle with the mouse position
+    local mouseX, mouseY = love.mouse.getPosition()
+    rectangle:setPosition(mouseX, mouseY)
+
+    -- Manually handle the collision between circle and rectangle
+    local cx, cy = circle:getPosition()
+    local rx, ry = rectangle:getPosition()
+
+    -- Get the rectangle's points (the four corners of the rectangle)
+    local points = {rectangleShape:getPoints()}
+    local rw = points[4] - points[2]  -- Calculate width from x points (point 2 and 4)
+    local rh = points[5] - points[1]  -- Calculate height from y points (point 1 and 5)
+
+    -- Simple bounding box collision check between the circle and rectangle
+    if cx + circleShape:getRadius() > rx - rw / 2 and cx - circleShape:getRadius() < rx + rw / 2 and
+       cy + circleShape:getRadius() > ry - rh / 2 and cy - circleShape:getRadius() < ry + rh / 2 then
+        -- If there's a collision, calculate bounce direction based on normal
+        local dx, dy = circle:getLinearVelocity()
+
+        -- Check the direction of impact (on the x-axis or y-axis)
+        if cx + circleShape:getRadius() > rx - rw / 2 and cx - circleShape:getRadius() < rx + rw / 2 then
+            -- Circle is colliding with the vertical side of the rectangle
+            dx = -dx  -- Reverse horizontal velocity
+        end
+        if cy + circleShape:getRadius() > ry - rh / 2 and cy - circleShape:getRadius() < ry + rh / 2 then
+            -- Circle is colliding with the horizontal side of the rectangle
+            dy = -dy  -- Reverse vertical velocity
+        end
+
+        -- Apply the updated velocity to simulate bouncing
+        circle:setLinearVelocity(dx, dy)
+        
+        -- Avoid circle overlap after bounce by adjusting its position
+        if cx + circleShape:getRadius() > rx - rw / 2 and cx - circleShape:getRadius() < rx + rw / 2 then
+            circle:setPosition(cx + circleShape:getRadius(), cy)
+        end
+        if cy + circleShape:getRadius() > ry - rh / 2 and cy - circleShape:getRadius() < ry + rh / 2 then
+            circle:setPosition(cx, cy + circleShape:getRadius())
+        end
+    end
 end
 
 function love.draw()
-	-- Draw Fence
-	love.graphics.rectangle("line", Fence.x, Fence.y, Fence.width, Fence.height)
+    -- Draw the circle
+    love.graphics.setColor(0, 1, 0) -- Green color
+    love.graphics.circle("fill", circle:getX(), circle:getY(), circleShape:getRadius())
 
-	-- Draw Circles
-	for _, circle in ipairs(TableOfCircles) do
-		love.graphics.circle("line", circle.x, circle.y, circle.radius)
-	end
-end
-
-function love.keypressed(key)
-	if key == "space" then
-		dx = randFloat()
-		dy = randFloat()
-
-		table.insert(TableOfCircles, spawnMovCircle(Party.x, Party.y, dx, dy, ProjectileRadius, ProjectileSpeed))
-	end
-end
-
--- Helper Functions
---- Update circles
----@param tableOfCircles any
----@param dt any
-function updateCircles(tableOfCircles, dt)
-	for _, circle in ipairs(tableOfCircles) do
-		-- Update circle position
-		circle.x = circle.x + circle.speed * circle.dx * dt
-		circle.y = circle.y + circle.speed * circle.dy * dt
-
-		-- Bounce circles off fence
-		circle, rect = bounceCircleOffRect(circle, Fence)
-
-		-- Bounce circles off screen
-		circle = bounceCircleOffScreen(circle)
-	end
-end
-
---- Reverse provided direction components of circle upon collision with screen edges
----@param circle movCircle
----@return movCircle
-function bounceCircleOffScreen(circle)
-	-- Collision on x axis
-	if circle.x - circle.radius < 0 or circle.x + circle.radius > ScreenWidth then
-		circle.dx = -circle.dx
-	end
-
-	-- Colision on y axis
-	if circle.y - circle.radius < 0 or circle.y + circle.radius > ScreenHeight then
-		circle.dy = -circle.dy
-	end
-
-	return circle
-end
-
--- Chatgpt provided
---- Bounce circle off rect
----@param circle any
----@param rect any
-function bounceCircleOffRect(circle, rect)
-	if circleRectangleCollision(circle, rect) then
-		-- Find the closest point on the rectangle
-        local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.width))
-        local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.height))
-
-        -- Calculate the collision normal (direction from the closest point to the circle center)
-        local normalX = circle.x - closestX
-        local normalY = circle.y - closestY
-        local normalLength = math.sqrt(normalX^2 + normalY^2)
-
-        -- Normalize the collision normal
-        normalX = normalX / normalLength
-        normalY = normalY / normalLength
-
-        -- Calculate dot product of velocity and normal to check if moving towards the rectangle
-        local dotProduct = circle.dx * normalX + circle.dy * normalY
-        
-        -- If dot product is negative, the circle is moving towards the rectangle
-        if dotProduct < 0 then
-            -- Reflect the velocity vector
-            circle.dx = circle.dx - 2 * dotProduct * normalX
-            circle.dy = circle.dy - 2 * dotProduct * normalY
-
-            -- Resolve the overlap for the circle: move the circle out of the rectangle
-            local overlap = circle.radius - normalLength
-            circle.x = circle.x + normalX * overlap
-            circle.y = circle.y + normalY * overlap
-
-            -- Resolve the overlap for the rectangle: move it out of the circle
-            -- Move the rectangle away from the circle along the collision normal
-            local rectOverlap = overlap
-            if math.abs(normalX) > math.abs(normalY) then
-                -- Move rectangle horizontally if the collision is mostly horizontal
-                rect.x = rect.x - normalX * rectOverlap
-            else
-                -- Move rectangle vertically if the collision is mostly vertical
-                rect.y = rect.y - normalY * rectOverlap
-            end
-        end
-	end
-
-	return circle, rect
-end
-
--- Chatgpt provided
---- Check for circle rectangle collision
----@param circle movCircle
----@param rect any
----@return boolean
-function circleRectangleCollision(circle, rect)
-    -- Find the closest point on the rectangle to the circle
-    local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.width))
-    local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.height))
-
-    -- Calculate the distance between the circle's center and this closest point
-    local distanceX = circle.x - closestX
-    local distanceY = circle.y - closestY
-    local distanceSquared = distanceX^2 + distanceY^2
-
-    -- Check if the distance is less than or equal to the circle's radius squared
-    return distanceSquared <= circle.radius^2
-end
-
--- Moving Circle definition
----@class movCircle
----@field x number
----@field y number
----@field dx number
----@field dy number
----@field radius number
----@field speed number
-
---- Return table with all components needed for a moving circle
----@param x number
----@param y number
----@param dx number
----@param dy number
----@param radius number
----@param speed number
----@return movCircle
-function spawnMovCircle(x, y, dx, dy, radius, speed)
-	return {
-		x = x,
-		y = y,
-		dx = dx,
-		dy = dy,
-		radius = radius,
-		speed = speed,
-	}
-end
-
---- Return random float between -1 and 1
----@return number
-function randFloat()
-	return love.math.random() * 2 - 1
+    -- Draw the rectangle
+    love.graphics.setColor(1, 0, 0) -- Red color
+    love.graphics.polygon("fill", rectangle:getWorldPoints(rectangleShape:getPoints()))
 end
 
 -- make error handling nice
