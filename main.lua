@@ -10,19 +10,25 @@ local ScreenHeight = love.graphics.getHeight()
 local PartyRadius = 25
 local PartySpeed = 150
 
+---@enum fenceState
+FenceStateEnum = {"material", "moving", "immaterial"}
 local FenceWidth = 40
 local FenceHeight = 5
+local FenceSpeedMod = 1.3
 
 local ProjectileRadius = 10
 local ProjectileSpeed = 200
 
 -- Callbacks
 function love.load()
-	-- Settings
-	love.mouse.setVisible(false)
-
 	-- Globals
 	TableOfCircles = {}
+
+	-- Fence Movement vars
+	StartOfMove = true
+	IsFencePhysical = true
+	FenceState = "material"
+	MouseDragStart = {x=0, y=0}
 
 	-- Party
 	Party = spawnMovCircle(ScreenWidth / 2, ScreenHeight / 2, randFloat(), randFloat(), PartyRadius, PartySpeed)
@@ -34,22 +40,66 @@ function love.load()
 end
 
 function love.update(dt)
-	-- Fence follows mouse
-	mouse_x, mouse_y = love.mouse.getPosition()
-	Fence.x = mouse_x - (Fence.width / 2)
-	Fence.y = mouse_y - (Fence.height / 2)
+	-- Fence movement logic
+	mouseX, mouseY = love.mouse.getPosition()
+	if love.mouse.isDown(1) then
+		FenceState = "moving"
+		-- Initialize the start of the movement
+		if StartOfMove then
+			MouseDragStart = {x=mouseX, y=mouseY}
+		end
+
+		-- Based off the distance and direction of the mouse movement, move the fence
+		local angle = math.atan2(mouseY - MouseDragStart.y, mouseX - MouseDragStart.x)
+		local cos = math.cos(angle)
+		local sin = math.sin(angle)
+		local distance = getDistance(MouseDragStart.x, MouseDragStart.y, mouseX, mouseY)
+
+		-- Update fence position
+		Fence.x = Fence.x + distance * FenceSpeedMod * cos * dt
+		Fence.y = Fence.y + distance * FenceSpeedMod * sin * dt
+
+		-- Keep fence in screen
+		Fence = keepRectInScreen(Fence)
+
+		StartOfMove = false
+	else
+		StartOfMove = true
+
+		-- Make fence material again if not colliding with anything
+		if FenceState == "immaterial" then
+			local colliding = false
+			local i = 1
+			while not colliding and i <= #TableOfCircles do
+				local circle = TableOfCircles[i]
+				if circleRectangleCollision(circle, Fence) then
+					colliding = true
+				end
+
+				i = i + 1
+			end
+
+			if not colliding then
+				FenceState = "material"
+			end
+		end
+	end
+
 
 	-- Update all circles
 	updateCircles(TableOfCircles, dt)
 end
 
 function love.draw()
-	-- Draw Fence
-	love.graphics.rectangle("line", Fence.x, Fence.y, Fence.width, Fence.height)
-
 	-- Draw Circles
 	for _, circle in ipairs(TableOfCircles) do
 		love.graphics.circle("line", circle.x, circle.y, circle.radius)
+	end
+
+	-- Draw Fence
+	love.graphics.rectangle("line", Fence.x, Fence.y, Fence.width, Fence.height)
+	if FenceState == "moving" then
+		love.graphics.line(MouseDragStart.x, MouseDragStart.y, mouseX, mouseY)
 	end
 end
 
@@ -62,12 +112,21 @@ function love.keypressed(key)
 	end
 end
 
+function love.mousereleased()
+	FenceState = "immaterial"
+end
+
 -- Helper Functions
 --- Update circles
 ---@param tableOfCircles any
 ---@param dt any
 function updateCircles(tableOfCircles, dt)
 	for _, circle in ipairs(tableOfCircles) do
+		-- Normalize the direction vector (dx, dy) to have a magnitude of 1
+		local magnitude = math.sqrt(circle.dx^2 + circle.dy^2)
+		circle.dx = circle.dx / magnitude
+		circle.dy = circle.dy / magnitude
+
 		-- Update circle position
 		circle.x = circle.x + circle.speed * circle.dx * dt
 		circle.y = circle.y + circle.speed * circle.dy * dt
@@ -97,49 +156,56 @@ function bounceCircleOffScreen(circle)
 	return circle
 end
 
+function keepRectInScreen(rect)
+	local rightEdge = rect.x + rect.width
+
+	if rightEdge > ScreenWidth then
+		rect.x = ScreenWidth - rect.width
+	elseif rect.x < 0 then
+		rect.x = 0
+	end
+
+	 return rect
+end
+
+--- Get distance between two points
+---@param x1 any
+---@param y1 any
+---@param x2 any
+---@param y2 any
+---@return number
+function getDistance(x1, y1, x2, y2)
+    local horizontal_distance = x1 - x2
+    local vertical_distance = y1 - y2
+
+    local a = horizontal_distance ^ 2
+    local b = vertical_distance ^ 2
+
+    local c = a + b
+    local distance = math.sqrt(c)
+
+    return distance
+end
+
+
 -- Chatgpt provided
 --- Bounce circle off rect
 ---@param circle any
 ---@param rect any
 function bounceCircleOffRect(circle, rect)
-	if circleRectangleCollision(circle, rect) then
-		-- Find the closest point on the rectangle
+	if circleRectangleCollision(circle, rect) and FenceState == "material" then
+		-- Determine the side of collision
         local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.width))
         local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.height))
+        local overlapX = circle.x - closestX
+        local overlapY = circle.y - closestY
 
-        -- Calculate the collision normal (direction from the closest point to the circle center)
-        local normalX = circle.x - closestX
-        local normalY = circle.y - closestY
-        local normalLength = math.sqrt(normalX^2 + normalY^2)
-
-        -- Normalize the collision normal
-        normalX = normalX / normalLength
-        normalY = normalY / normalLength
-
-        -- Calculate dot product of velocity and normal to check if moving towards the rectangle
-        local dotProduct = circle.dx * normalX + circle.dy * normalY
-        
-        -- If dot product is negative, the circle is moving towards the rectangle
-        if dotProduct < 0 then
-            -- Reflect the velocity vector
-            circle.dx = circle.dx - 2 * dotProduct * normalX
-            circle.dy = circle.dy - 2 * dotProduct * normalY
-
-            -- Resolve the overlap for the circle: move the circle out of the rectangle
-            local overlap = circle.radius - normalLength
-            circle.x = circle.x + normalX * overlap
-            circle.y = circle.y + normalY * overlap
-
-            -- Resolve the overlap for the rectangle: move it out of the circle
-            -- Move the rectangle away from the circle along the collision normal
-            local rectOverlap = overlap
-            if math.abs(normalX) > math.abs(normalY) then
-                -- Move rectangle horizontally if the collision is mostly horizontal
-                rect.x = rect.x - normalX * rectOverlap
-            else
-                -- Move rectangle vertically if the collision is mostly vertical
-                rect.y = rect.y - normalY * rectOverlap
-            end
+        if math.abs(overlapX) > math.abs(overlapY) then
+            -- Vertical collision (left or right)
+            circle.dx = -circle.dx
+        else
+            -- Horizontal collision (top or bottom)
+            circle.dy = -circle.dy
         end
 	end
 
