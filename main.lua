@@ -165,6 +165,7 @@ end
 
 function keepRectInScreen(rect)
 	local rightEdge = rect.x + rect.width
+	local bottomEdge = rect.y + rect.height
 
 	if rightEdge > ScreenWidth then
 		rect.x = ScreenWidth - rect.width
@@ -172,7 +173,13 @@ function keepRectInScreen(rect)
 		rect.x = 0
 	end
 
-	 return rect
+	if bottomEdge > ScreenHeight then
+		rect.y = ScreenHeight - rect.height
+	elseif rect.y < 1 then
+		rect.y = 1
+	end
+
+	return rect
 end
 
 --- Get distance between two points
