@@ -7,15 +7,22 @@ end
 local ScreenWidth = love.graphics.getWidth()
 local ScreenHeight = love.graphics.getHeight()
 
+-- Party
 local PartyRadius = 25
 local PartySpeed = 150
 
----@enum fenceState
-FenceStateEnum = {"material", "moving", "immaterial"}
+-- Fence
+---@enum fenceStates
+F_STATES = {material=0, moving=1, immaterial=2}
+
+---@param fenceState fenceStates
+local function setFenceState(fenceState) end
+
 local FenceWidth = 40
 local FenceHeight = 5
-local FenceSpeedMod = 1.3
+local FenceSpeedMod = 1.4
 
+-- Projectiles
 local ProjectileRadius = 10
 local ProjectileSpeed = 200
 
@@ -27,7 +34,7 @@ function love.load()
 	-- Fence Movement vars
 	StartOfMove = true
 	IsFencePhysical = true
-	FenceState = "material"
+	FenceState = F_STATES.material
 	MouseDragStart = {x=0, y=0}
 
 	-- Party
@@ -43,7 +50,7 @@ function love.update(dt)
 	-- Fence movement logic
 	mouseX, mouseY = love.mouse.getPosition()
 	if love.mouse.isDown(1) then
-		FenceState = "moving"
+		FenceState = F_STATES.moving
 		-- Initialize the start of the movement
 		if StartOfMove then
 			MouseDragStart = {x=mouseX, y=mouseY}
@@ -67,7 +74,7 @@ function love.update(dt)
 		StartOfMove = true
 
 		-- Make fence material again if not colliding with anything
-		if FenceState == "immaterial" then
+		if FenceState == F_STATES.immaterial then
 			local colliding = false
 			local i = 1
 			while not colliding and i <= #TableOfCircles do
@@ -80,7 +87,7 @@ function love.update(dt)
 			end
 
 			if not colliding then
-				FenceState = "material"
+				FenceState = F_STATES.material
 			end
 		end
 	end
@@ -98,7 +105,7 @@ function love.draw()
 
 	-- Draw Fence
 	love.graphics.rectangle("line", Fence.x, Fence.y, Fence.width, Fence.height)
-	if FenceState == "moving" then
+	if FenceState == F_STATES.moving then
 		love.graphics.line(MouseDragStart.x, MouseDragStart.y, mouseX, mouseY)
 	end
 end
@@ -113,7 +120,7 @@ function love.keypressed(key)
 end
 
 function love.mousereleased()
-	FenceState = "immaterial"
+	FenceState = F_STATES.immaterial
 end
 
 -- Helper Functions
@@ -193,7 +200,7 @@ end
 ---@param circle any
 ---@param rect any
 function bounceCircleOffRect(circle, rect)
-	if circleRectangleCollision(circle, rect) and FenceState == "material" then
+	if circleRectangleCollision(circle, rect) and FenceState == F_STATES.material then
 		-- Determine the side of collision
         local closestX = math.max(rect.x, math.min(circle.x, rect.x + rect.width))
         local closestY = math.max(rect.y, math.min(circle.y, rect.y + rect.height))
