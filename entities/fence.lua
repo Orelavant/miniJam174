@@ -10,8 +10,8 @@ FENCE_STATES = {material=0, moving=1, immaterial=2}
 
 -- Local config
 local width = 60
-local height = 3
-local speedMod = 1.6
+local height = 5
+local speedMod = 1.65
 local color = LightBlue
 
 -- Constructor
@@ -82,17 +82,18 @@ function Fence:update(mouseDown, mouseX, mouseY, dt)
 		end
 	end
 
-	-- TODO Transparent when immaterial/moving
-	-- if self.state == FENCE_STATES.moving or FENCE_STATES.immaterial then
-		-- self.color[3] = 0
-	-- else
-		-- self.color[3] = 1
-	-- end
+	if self.state == FENCE_STATES.moving or self.state == FENCE_STATES.immaterial then
+		self.color = SemiTransparentLightBlue
+	else
+		self.color = LightBlue
+	end
 end
 
 -- Chat Gpt Generated
 function Fence:handleCircleCollision(circle)
     if self:circleCollided(circle) then
+		Fence:bounceSfx()
+
         -- Find the closest point on the rectangle to the circle
         local closestX = math.max(self.x, math.min(circle.x, self.x + self.width))
         local closestY = math.max(self.y, math.min(circle.y, self.y + self.height))
@@ -127,9 +128,16 @@ function Fence:circleCollided(circle)
 end
 
 function Fence:rotate()
+	self.state = FENCE_STATES.immaterial
+
 	local temp = self.width
 	self.width = self.height
 	self.height = temp
+end
+
+function Fence:bounceSfx()
+	local n = love.math.random(1, #BounceSfxTable)
+	BounceSfxTable[n]:play()
 end
 
 return Fence

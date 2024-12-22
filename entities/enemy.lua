@@ -5,15 +5,17 @@ local Enemy = Circle:extend()
 
 -- Local config
 local speed = 65
-local boostValue = 50
+local boostValue = 40
 local dizzyTimer = 3
+local boostDecayTime = 2
+local boostDecayPerSecond = boostValue / boostDecayTime
 local color = Orange
 
 function Enemy:new(x, y, dx, dy, radius)
     Enemy.super.new(self, x, y, dx, dy, radius, speed, color, CIRCLE_TYPES.enemy)
     self.dizzy = false
     self.dizzyTimer = dizzyTimer
-    self.boostTracker = 0
+    self.boostDecayTimer = 0
     --- TODO temp fix since boost is being applied multiple times for some reason
     self.boostApplied = false
 end
@@ -44,14 +46,13 @@ end
 
 function Enemy:applyBoost()
     self.speed = self.speed + boostValue
-    self.boostTracker = boostValue
+    self.boostDecayTimer = boostDecayTime
     self.boostApplied = true
 end
 
 function Enemy:decayBoost(dt)
-    if self.boostTracker > 0 then
-        local sub = 25 * dt
-        self.boostTracker = self.boostTracker - sub
+    if self.boostDecayTimer > 0 then
+        local sub = boostDecayPerSecond * dt
         self.speed = self.speed - sub
     else
         self.boostApplied = false

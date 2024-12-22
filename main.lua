@@ -11,20 +11,34 @@ local Utils = require "utils"
 GAME_STATES = {play=0, done=1, menu=2}
 local DebugMode = true
 
+local Song = love.audio.newSource("audio/spaceJazz.mp3", "stream")
+Song:setVolume(0.5)
+local FireballShotSfx = love.audio.newSource("audio/fireball.wav", "static")
+local EnemyDeathSfx = love.audio.newSource("audio/enemyDeath2.wav", "static")
+BounceSfxTable = {
+	love.audio.newSource("audio/bounce1.wav", "static"),
+	love.audio.newSource("audio/bounce2.wav", "static")
+}
+
 -- TODO move to seperate config file
 White = {1, 1, 1, 0.8}
 Red = {1, 0, 0, 0.8}
 Green = {0, 1, 0, 0.5}
 LightBlue = {0.68, 0.85, 0.9, 1}
+SemiTransparentLightBlue = {0.68, 0.85, 0.9, 0.5}
+TransparentLightBlue = {0.68, 0.85, 0.9, 0.2}
 Orange = {1, 0.647, 0, 0.8}
+
 local ScreenWidth = love.graphics.getWidth()
 local ScreenWidthMid = ScreenWidth / 2
 local ScreenHeight = love.graphics.getHeight()
 local ScreenHeightMid  = ScreenHeight / 2
 
 local PartyRadius = 25
-local PartySpeed = 60
 local PartyColor = White
+local PartySpeedMod = 10
+local InitPartySpeedModRate = 21
+local PartySpeedModRate = 25
 
 local FenceX = ScreenWidthMid
 local FenceY = ScreenHeightMid - 150
@@ -40,22 +54,29 @@ local EnemySpawnLocations = {
 local EnemySpawnRate = 10
 
 local FireballColor = Red
-local FireballRadius = 15
+local FireballRadius = 10
 local FireballSpeed = 150
 local FireballSpawnRate = 7
-local FireballDecay = FireballSpawnRate / 3
+local FireballDecay = FireballSpawnRate * 1.5
 local HealColor = Green
 local HealRadius = 20
 local HealSpeed = 150
 local HealSpawnRate = 13
-local HealDecay = HealSpawnRate / 3
+local HealDecay = HealSpawnRate * 2
+
 
 -- Callbacks
 function love.load()
+	-- Audio
+	Song:setLooping(true)
+	Song:play()
+
 	-- Globals
 	GameState = GAME_STATES.play
 	Score = 0
 	PartyHealth = 5
+	PartySpeed = 0
+	PartyTimer = InitPartySpeedModRate
 	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
 	StartOfMove = true
@@ -90,8 +111,16 @@ function love.update(dt)
 	MousePos.x, MousePos.y = love.mouse.getPosition()
 
 	-- Update charge radiuses
-	CurrHealRadius = updateChargeRadius(CurrHealRadius, HealRadius, HealSpawnRate, dt)
-	CurrFireballRadius = updateChargeRadius(CurrFireballRadius, FireballRadius, FireballSpawnRate, dt)
+	CurrHealRadius = updateChargeRadius(CurrHealRadius, PartyRadius, HealSpawnRate, dt)
+	CurrFireballRadius = updateChargeRadius(CurrFireballRadius, PartyRadius, FireballSpawnRate, dt)
+
+	-- Update party speed
+	if PartyTimer > 0 then
+		PartyTimer = PartyTimer - dt
+	else
+		PartyTimer = PartySpeedModRate
+		Party.speed = PartySpeed + PartySpeedMod
+	end
 
 	-- Spawn timers
 	if HealTimer <= 0 then
@@ -161,6 +190,8 @@ function love.update(dt)
 				-- Resolve effect
 				if projectile.type == CIRCLE_TYPES.Fireball then
 					table.remove(TableOfEnemies, j)
+					EnemyDeathSfx:play()
+					Score = Score + 10
 				elseif projectile.type == CIRCLE_TYPES.heal then
 					enemy:applyBoost()
 				end
@@ -189,15 +220,11 @@ function love.update(dt)
 
 	-- Check if game over
 	if PartyHealth <= 0 then
-		GameState = GAME_STATES.done
-		love.load()
+		resetGame()
 	end
 end
 
 function love.draw()
-	-- Health
-	love.graphics.print(PartyHealth, ScreenWidth-40, 0, 0, 2, 2)
-
 	-- Draw Circles
 	Party:draw()
 	for _, projectile in ipairs(TableOfProjectiles) do
@@ -215,27 +242,33 @@ function love.draw()
 	Fence:draw()
 
 	-- Debugging fence movement line
-	if DebugMode and Fence.state == FENCE_STATES.moving then
+	if Fence.state == FENCE_STATES.moving then
+		love.graphics.setColor(TransparentLightBlue)
 		love.graphics.line(MouseDragStart.x, MouseDragStart.y, MousePos.x, MousePos.y)
+		love.graphics.setColor(White)
 	end
+
+	-- Score and Health
+	love.graphics.print("Health: " .. PartyHealth, ScreenWidth-60, 0, 0, 1, 1)
+	love.graphics.print("Score: " .. Score, 0, 0, 0, 1, 1)
 end
 
 function love.keypressed(key)
 	-- Reset game
 	if key == "r" then
-		love.load()
+		resetGame()
 	end
 	
-	if key == "d" then
+	if key == "space" then
 		Fence:rotate()
 	end
 
 	-- Debugging spawns
-	if DebugMode and key == "space" then
+	if DebugMode and key == "f" then
 		spawnFireball()
 	end
 
-	if DebugMode and key == "f" then
+	if DebugMode and key == "d" then
 		spawnHeal()
 	end
 
@@ -268,6 +301,8 @@ function spawnFireball()
 			FireballDecay
 		)
 		table.insert(TableOfProjectiles, fireball)
+
+		FireballShotSfx:play()
 end
 
 function spawnHeal()
@@ -313,6 +348,12 @@ function updateChargeRadius(currRadius, targetRadius, projectileSpawnRate, dt)
     end
 
 	return currRadius
+end
+
+function resetGame()
+	GameState = GAME_STATES.done
+	Song:stop()
+	love.load()
 end
 
 -- make error handling nice
