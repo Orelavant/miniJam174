@@ -9,9 +9,9 @@ local Fence = Rectangle:extend()
 FENCE_STATES = {material=0, moving=1, immaterial=2}
 
 -- Local config
-local width = 40
-local height = 5
-local speedMod = 1.5
+local width = 60
+local height = 3
+local speedMod = 1.6
 local color = LightBlue
 
 -- Constructor
@@ -93,39 +93,43 @@ end
 -- Chat Gpt Generated
 function Fence:handleCircleCollision(circle)
     if self:circleCollided(circle) then
-        -- Determine the closest point on the rectangle to the circle's center
+        -- Find the closest point on the rectangle to the circle
         local closestX = math.max(self.x, math.min(circle.x, self.x + self.width))
         local closestY = math.max(self.y, math.min(circle.y, self.y + self.height))
-        
-        -- Calculate overlap
+
+        -- Calculate the vector from the circle's center to the closest point
         local overlapX = circle.x - closestX
         local overlapY = circle.y - closestY
+        local distance = math.sqrt(overlapX^2 + overlapY^2)
 
-        -- Push the circle out and reverse its velocity
-        if math.abs(overlapX) > math.abs(overlapY) then
-            -- Horizontal collision (left or right)
-            if overlapX > 0 then
-                circle.x = closestX + circle.radius -- Push right
-            else
-                circle.x = closestX - circle.radius -- Push left
-            end
-            circle.dx = -circle.dx -- Reverse horizontal velocity
-        else
-            -- Vertical collision (top or bottom)
-            if overlapY > 0 then
-                circle.y = closestY + circle.radius -- Push down
-            else
-                circle.y = closestY - circle.radius -- Push up
-            end
-            circle.dy = -circle.dy -- Reverse vertical velocity
+        -- If the circle is actually overlapping (distance < circle radius)
+        if distance < circle.radius then
+            -- Normalize the overlap vector
+            local normX = overlapX / distance
+            local normY = overlapY / distance
+
+            -- Push the circle out along the normalized vector
+            circle.x = closestX + normX * circle.radius
+            circle.y = closestY + normY * circle.radius
+
+            -- Reflect the circle's velocity along the normal
+            local dot = circle.dx * normX + circle.dy * normY
+            circle.dx = circle.dx - 2 * dot * normX
+            circle.dy = circle.dy - 2 * dot * normY
         end
     end
 
-	return circle
+    return circle
 end
 
 function Fence:circleCollided(circle)
 	return self:checkCircleCollision(circle) and self.state == FENCE_STATES.material
+end
+
+function Fence:rotate()
+	local temp = self.width
+	self.width = self.height
+	self.height = temp
 end
 
 return Fence

@@ -11,40 +11,63 @@ local Utils = require "utils"
 GAME_STATES = {play=0, done=1, menu=2}
 local DebugMode = true
 
-local ScreenWidth = love.graphics.getWidth()
-local ScreenHeight = love.graphics.getHeight()
 -- TODO move to seperate config file
 White = {1, 1, 1, 0.8}
 Red = {1, 0, 0, 0.8}
-Green = {0, 1, 0, 0.8}
-LightBlue = {0.68, 0.85, 0.9, 0.8}
+Green = {0, 1, 0, 0.5}
+LightBlue = {0.68, 0.85, 0.9, 1}
 Orange = {1, 0.647, 0, 0.8}
+local ScreenWidth = love.graphics.getWidth()
+local ScreenWidthMid = ScreenWidth / 2
+local ScreenHeight = love.graphics.getHeight()
+local ScreenHeightMid  = ScreenHeight / 2
 
 local PartyRadius = 25
 local PartySpeed = 60
 local PartyColor = White
 
-local FireballColor = Red
-local FireballRadius = 5
-local FireballSpeed = 200
-local HealColor = Green
-local HealRadius = 5
-local HealSpeed = 200
+local FenceX = ScreenWidthMid
+local FenceY = ScreenHeightMid - 150
 
-local Fence --- @type Fence
-local FenceX = ScreenWidth / 2
-local FenceY = (ScreenHeight / 2) - 150
+local EnemyRadius = 15
+local EnemySpawnBuffer = 5
+local EnemySpawnLocations = {
+	{x=ScreenWidthMid, y=EnemyRadius},
+	{x=EnemyRadius + EnemySpawnBuffer, y=ScreenHeightMid},
+	{x=ScreenWidth - EnemyRadius - EnemySpawnBuffer, y=ScreenHeightMid},
+	{x=ScreenWidthMid, y=ScreenHeight - EnemyRadius - EnemySpawnBuffer}
+}
+local EnemySpawnRate = 10
+
+local FireballColor = Red
+local FireballRadius = 15
+local FireballSpeed = 150
+local FireballSpawnRate = 7
+local FireballDecay = FireballSpawnRate / 3
+local HealColor = Green
+local HealRadius = 20
+local HealSpeed = 150
+local HealSpawnRate = 13
+local HealDecay = HealSpawnRate / 3
 
 -- Callbacks
 function love.load()
 	-- Globals
 	GameState = GAME_STATES.play
-	PartyHealth = 20
+	Score = 0
+	PartyHealth = 5
 	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
 	StartOfMove = true
 	MousePos = {x=0, y=0}
 	MouseDragStart = {x=0, y=0}
+
+	FireballTimer = FireballSpawnRate
+	CurrFireballRadius = 0
+	HealTimer = HealSpawnRate
+	CurrHealRadius = 0
+
+	EnemyTimer = 3
 
 	-- Init classes
 	CircleInit = require "entities.circle"
@@ -53,8 +76,11 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	---@type Circle
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
+    -- Normalize the direction vector (dx, dy) to have a magnitude of 1
+    local magnitude = math.sqrt(Utils.randFloat()^2 + Utils.randFloat()^2)
+    local dx = Utils.randFloat() / magnitude
+    local dy = Utils.randFloat() / magnitude
+	Party = CircleInit(ScreenWidthMid, ScreenHeightMid, dx, dy, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 
 	Fence = FenceInit(FenceX, FenceY)
 end
@@ -62,6 +88,30 @@ end
 function love.update(dt)
 	-- Get position of mouse
 	MousePos.x, MousePos.y = love.mouse.getPosition()
+
+	-- Update charge radiuses
+	CurrHealRadius = updateChargeRadius(CurrHealRadius, HealRadius, HealSpawnRate, dt)
+	CurrFireballRadius = updateChargeRadius(CurrFireballRadius, FireballRadius, FireballSpawnRate, dt)
+
+	-- Spawn timers
+	if HealTimer <= 0 then
+		spawnHeal()
+		HealTimer = HealSpawnRate
+	else
+		HealTimer = HealTimer - dt
+	end
+	if FireballTimer <= 0 then
+		spawnFireball()
+		FireballTimer = FireballSpawnRate
+	else
+		FireballTimer  = FireballTimer - dt
+	end
+	if EnemyTimer <= 0 then
+		spawnEnemy()
+		EnemyTimer = EnemySpawnRate
+	else
+		EnemyTimer  = EnemyTimer - dt
+	end
 
 	-- Update fence
 	Fence:update(love.mouse.isDown(1), MousePos.x, MousePos.y, dt)
@@ -76,6 +126,9 @@ function love.update(dt)
 
 		-- Move projectile
 		projectile:update(dt)
+		if projectile.decay <= 0 then
+			table.remove(TableOfProjectiles, i)
+		end
 		
 		-- Fence collision
 		projectile = Fence:handleCircleCollision(projectile)
@@ -87,7 +140,7 @@ function love.update(dt)
 			if projectile.type == CIRCLE_TYPES.Fireball then
 				PartyHealth = PartyHealth - 1
 			elseif projectile.type == CIRCLE_TYPES.heal then
-				PartyHealth = PartyHealth + 1
+				PartyHealth = PartyHealth + 2
 			end
 
 			-- Remove from table
@@ -97,28 +150,27 @@ function love.update(dt)
 
 		-- Enemy collision
 		-- TODO fix bug with many projectiles getting removed that were not involved in collision and many enemies spawning (after heal hits them)
-		for i=#TableOfEnemies,1,-1 do
-			enemy = TableOfEnemies[i]
+		-- TODO fix bug where boost is getting applied multiple times
+		for j=#TableOfEnemies,1,-1 do
+			local enemy = TableOfEnemies[j]
 
 			if enemy:checkCircleCollision(projectile) then
+				-- Remove from table
+				table.remove(TableOfProjectiles, j)
+
 				-- Resolve effect
 				if projectile.type == CIRCLE_TYPES.Fireball then
-					table.remove(TableOfEnemies, i)
+					table.remove(TableOfEnemies, j)
 				elseif projectile.type == CIRCLE_TYPES.heal then
-					-- TODO make this speed boost big decaying, so if you bounce them away its rewarding
-					enemy.speed = enemy.speed + 10
-					table.insert(TableOfEnemies, newEnemy)
+					enemy:applyBoost()
 				end
-	
-				-- Remove from table
-				table.remove(TableOfProjectiles, i)
 			end
 		end
 	end
 
 	-- Update enemies
 	for i=#TableOfEnemies,1,-1 do
-		enemy = TableOfEnemies[i]
+		local enemy = TableOfEnemies[i]
 
 		enemy:update(dt)
 
@@ -148,12 +200,16 @@ function love.draw()
 
 	-- Draw Circles
 	Party:draw()
-	for _, circle in ipairs(TableOfProjectiles) do
-		circle:draw()
+	for _, projectile in ipairs(TableOfProjectiles) do
+		projectile:draw()
 	end
-	for _, circle in ipairs(TableOfEnemies) do
-		circle:draw()
+	for _, enemy in ipairs(TableOfEnemies) do
+		enemy:draw()
 	end
+
+	-- Draw projectile charge animations
+	drawChargeAnimation(CurrHealRadius, HealColor)
+	drawChargeAnimation(CurrFireballRadius, FireballColor)
 
 	-- Draw Fence
 	Fence:draw()
@@ -165,28 +221,98 @@ function love.draw()
 end
 
 function love.keypressed(key)
-	-- Debugging spawn projectile
+	-- Reset game
+	if key == "r" then
+		love.load()
+	end
+	
+	if key == "d" then
+		Fence:rotate()
+	end
+
+	-- Debugging spawns
 	if DebugMode and key == "space" then
-		-- TODO track nearest enemy, shoot Fireball at them
-		local fireball = ProjectileInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), FireballRadius, FireballSpeed, FireballColor, CIRCLE_TYPES.Fireball)
-		table.insert(TableOfProjectiles, fireball)
+		spawnFireball()
 	end
 
 	if DebugMode and key == "f" then
-		local heal = ProjectileInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), HealRadius, HealSpeed, HealColor, CIRCLE_TYPES.heal)
-		table.insert(TableOfProjectiles, heal)
+		spawnHeal()
 	end
 
-	-- Debugging enemy spawn
 	if DebugMode and key == "e" then
-		local enemy = EnemyInit(love.math.random(EnemyRadius+5, love.graphics.getWidth()), EnemyRadius+5, Utils.randFloat(), Utils.randFloat())
-		table.insert(TableOfEnemies, enemy)
+		spawnEnemy()
 	end
 end
 
 function love.mousereleased()
 	-- Fence won't block stuff until it's no longer colliding with anything
 	Fence.state = FENCE_STATES.immaterial
+end
+
+function spawnFireball()
+		local cos, sin = Utils.getSourceTargetAngleComponents(
+			Party.x,
+			Party.y,
+			(Fence.x + (Fence.width / 2)),
+			(Fence.y + (Fence.height / 2))
+		)
+		local fireball = ProjectileInit(
+			Party.x,
+			Party.y,
+			cos,
+			sin,
+			FireballRadius,
+			FireballSpeed,
+			FireballColor,
+			CIRCLE_TYPES.Fireball,
+			FireballDecay
+		)
+		table.insert(TableOfProjectiles, fireball)
+end
+
+function spawnHeal()
+	local cos, sin = Utils.getSourceTargetAngleComponents(
+		Party.x,
+		Party.y,
+		(Fence.x + (Fence.width / 2)),
+		(Fence.y + (Fence.height / 2))
+	)
+	local heal = ProjectileInit(
+		Party.x,
+		Party.y,
+		cos,
+		sin,
+		HealRadius,
+		HealSpeed,
+		HealColor,
+		CIRCLE_TYPES.heal,
+		HealDecay
+	)
+	table.insert(TableOfProjectiles, heal)
+end
+
+function spawnEnemy()
+	local spawn = EnemySpawnLocations[love.math.random(1, #EnemySpawnLocations)]
+	local enemy = EnemyInit(
+		spawn.x,
+		spawn.y,
+		Utils.randFloat(),
+		Utils.randFloat(),
+		EnemyRadius
+	)
+	table.insert(TableOfEnemies, enemy)
+end
+
+function updateChargeRadius(currRadius, targetRadius, projectileSpawnRate, dt)
+    -- Projectile charge radius
+    if currRadius < targetRadius then
+		local updateRate = targetRadius / projectileSpawnRate
+        currRadius = currRadius + updateRate * dt
+    else
+        currRadius = 0
+    end
+
+	return currRadius
 end
 
 -- make error handling nice

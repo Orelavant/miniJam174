@@ -25,4 +25,12 @@ function utils.randFloat()
 	return love.math.random() * 2 - 1
 end
 
+function utils.getSourceTargetAngleComponents(sourceX, sourceY, targetX, targetY)
+    local angle = math.atan2(
+        targetY - sourceY,
+        targetX - sourceX
+    )
+    return math.cos(angle), math.sin(angle)
+end
+
 return utils

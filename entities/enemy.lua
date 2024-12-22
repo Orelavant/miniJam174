@@ -4,15 +4,18 @@ local Circle = require "entities.Circle"
 local Enemy = Circle:extend()
 
 -- Local config
-EnemyRadius = 10
-local speed = 80
-local dizzyTimer = 2
+local speed = 65
+local boostValue = 50
+local dizzyTimer = 3
 local color = Orange
 
-function Enemy:new(x, y, dx, dy)
-    Enemy.super.new(self, x, y, dx, dy, EnemyRadius, speed, color, CIRCLE_TYPES.enemy)
+function Enemy:new(x, y, dx, dy, radius)
+    Enemy.super.new(self, x, y, dx, dy, radius, speed, color, CIRCLE_TYPES.enemy)
     self.dizzy = false
     self.dizzyTimer = dizzyTimer
+    self.boostTracker = 0
+    --- TODO temp fix since boost is being applied multiple times for some reason
+    self.boostApplied = false
 end
 
 function Enemy:update(dt)
@@ -31,11 +34,28 @@ function Enemy:update(dt)
         end
     end
 
+    self:decayBoost(dt)
     Enemy.super.update(self, dt)
 end
 
 function Enemy:setDizzy(boolean)
     self.dizzy = boolean
+end
+
+function Enemy:applyBoost()
+    self.speed = self.speed + boostValue
+    self.boostTracker = boostValue
+    self.boostApplied = true
+end
+
+function Enemy:decayBoost(dt)
+    if self.boostTracker > 0 then
+        local sub = 25 * dt
+        self.boostTracker = self.boostTracker - sub
+        self.speed = self.speed - sub
+    else
+        self.boostApplied = false
+    end
 end
 
 return Enemy
