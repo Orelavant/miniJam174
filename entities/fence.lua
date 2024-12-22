@@ -11,7 +11,7 @@ FENCE_STATES = {material=0, moving=1, immaterial=2}
 -- Local config
 local width = 40
 local height = 5
-local speedMod = 1.4
+local speedMod = 1.5
 local color = White
 
 -- Constructor
@@ -79,24 +79,36 @@ function Fence:update(mouseDown, mouseX, mouseY, dt)
 	-- end
 end
 
+-- Chat Gpt Generated
 function Fence:handleCircleCollision(circle)
-	if self:circleCollided(circle) then
-		-- Determine the side of collision
+    if self:circleCollided(circle) then
+        -- Determine the closest point on the rectangle to the circle's center
         local closestX = math.max(self.x, math.min(circle.x, self.x + self.width))
         local closestY = math.max(self.y, math.min(circle.y, self.y + self.height))
+        
+        -- Calculate overlap
         local overlapX = circle.x - closestX
         local overlapY = circle.y - closestY
 
+        -- Push the circle out and reverse its velocity
         if math.abs(overlapX) > math.abs(overlapY) then
-            -- Vertical collision
-            circle.dx = -circle.dx
+            -- Horizontal collision (left or right)
+            if overlapX > 0 then
+                circle.x = closestX + circle.radius -- Push right
+            else
+                circle.x = closestX - circle.radius -- Push left
+            end
+            circle.dx = -circle.dx -- Reverse horizontal velocity
         else
-            -- Horizontal collision
-            circle.dy = -circle.dy
+            -- Vertical collision (top or bottom)
+            if overlapY > 0 then
+                circle.y = closestY + circle.radius -- Push down
+            else
+                circle.y = closestY - circle.radius -- Push up
+            end
+            circle.dy = -circle.dy -- Reverse vertical velocity
         end
-	end
-
-	return circle
+    end
 end
 
 function Fence:circleCollided(circle)
