@@ -11,12 +11,17 @@ local DebugMode = true
 
 local ScreenWidthMid = love.graphics.getWidth() / 2
 local ScreenHeightMid = love.graphics.getHeight() / 2
+White = {1, 1, 1, 1}
+Red = {1, 0, 0, 1}
+Green = {0, 1, 0, 0.5}
 
 local PartyRadius = 25
 local PartySpeed = 60
+local PartyColor = Green
 
-local ProjectileRadius = 10
+local ProjectileRadius = 5
 local ProjectileSpeed = 200
+local ProjectileColor = Red
 
 local Fence --- @type Fence
 local FenceX = ScreenWidthMid
@@ -37,7 +42,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidthMid, ScreenHeightMid, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed)
+	Party = CircleInit(ScreenWidthMid, ScreenHeightMid, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor)
 	table.insert(TableOfCircles, Party)
 
 	Fence = FenceInit(FenceX, FenceY)
@@ -89,12 +94,12 @@ end
 function love.keypressed(key)
 	-- Debugging spawn projectile
 	if DebugMode and key == "space" then
-		table.insert(TableOfCircles, CircleInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), ProjectileRadius, ProjectileSpeed))
+		table.insert(TableOfCircles, CircleInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), ProjectileRadius, ProjectileSpeed, ProjectileColor))
 	end
 
 	-- Debugging enemy spawn
 	if DebugMode and key == "e" then
-		table.insert(TableOfEnemies, EnemyInit(ScreenWidthMid, EnemyRadius+5, Utils.randFloat(), Utils.randFloat()))
+		table.insert(TableOfEnemies, EnemyInit(love.math.random(EnemyRadius+5, love.graphics.getWidth()), EnemyRadius+5, Utils.randFloat(), Utils.randFloat()))
 	end
 end
 

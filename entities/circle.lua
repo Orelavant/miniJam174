@@ -8,12 +8,12 @@ local Circle = Point:extend()
 ---@param x number
 ---@param y number
 ---@param radius number
----@param speed number
-function Circle:new(x, y, dx, dy, radius, speed)
-    Circle.super.new(self, x, y, speed)
+function Circle:new(x, y, dx, dy, radius, speed, color)
+    Circle.super.new(self, x, y, color)
     self.dx = dx
     self.dy = dy
     self.radius = radius
+    self.speed = speed
 end
 
 --- Update circle position
@@ -33,7 +33,9 @@ function Circle:update(dt)
 end
 
 function Circle:draw()
+    love.graphics.setColor(self.color)
 	love.graphics.circle("line", self.x, self.y, self.radius)
+    love.graphics.setColor(White)
 end
 
 --- Reverse provided direction components of circle upon collision with screen edges

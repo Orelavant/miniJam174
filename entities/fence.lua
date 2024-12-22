@@ -12,10 +12,11 @@ FENCE_STATES = {material=0, moving=1, immaterial=2}
 local width = 40
 local height = 5
 local speedMod = 1.4
+local color = White
 
 -- Constructor
 function Fence:new(x, y)
-    Fence.super.new(self, x, y, width, height)
+    Fence.super.new(self, x, y, width, height, color)
     self.speedMod = speedMod
     self.state = FENCE_STATES.material
 end
@@ -69,6 +70,13 @@ function Fence:update(mouseDown, mouseX, mouseY, dt)
 			end
 		end
 	end
+
+	-- TODO Transparent when immaterial/moving
+	-- if self.state == FENCE_STATES.moving or FENCE_STATES.immaterial then
+		-- self.color[3] = 0
+	-- else
+		-- self.color[3] = 1
+	-- end
 end
 
 function Fence:handleCircleCollision(circle)

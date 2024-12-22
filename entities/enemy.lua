@@ -7,9 +7,10 @@ local Enemy = Circle:extend()
 EnemyRadius = 10
 local speed = 80
 local dizzyTimer = 2
+local color = {1, 0.647, 0, 0.5}
 
 function Enemy:new(x, y, dx, dy)
-    Enemy.super.new(self, x, y, dx, dy, EnemyRadius, speed)
+    Enemy.super.new(self, x, y, dx, dy, EnemyRadius, speed, color)
     self.dizzy = false
     self.dizzyTimer = dizzyTimer
 end

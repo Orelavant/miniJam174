@@ -4,20 +4,17 @@ local Point = require "entities.point"
 local Rectangle = Point:extend()
 
 ---Constructor
----@param x number
----@param y number
----@param width number
----@param height number
----@param speed number
-function Rectangle:new(x, y, width, height, speed)
-    Rectangle.super.new(self, x, y, speed)
+function Rectangle:new(x, y, width, height, color)
+    Rectangle.super.new(self, x, y, color)
     self.width = width
     self.height = height
 end
 
 --- Draw rectangle
 function Rectangle:draw()
+    love.graphics.setColor(self.color)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(White)
 end
 
 function Rectangle:handleScreenCollision()
