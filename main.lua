@@ -105,10 +105,7 @@ function love.update(dt)
 				if projectile.type == CIRCLE_TYPES.Fireball then
 					table.remove(TableOfEnemies, i)
 				elseif projectile.type == CIRCLE_TYPES.heal then
-					-- TODO spawn perpendicular to travel direction
-					-- Spawn enemy logic
-					-- local newEnemy  = EnemyInit(enemy.x-20, enemy.y, Utils.randFloat(), Utils.randFloat())
-					-- TODO make this speed boost decaying
+					-- TODO make this speed boost big decaying, so if you bounce them away its rewarding
 					enemy.speed = enemy.speed + 10
 					table.insert(TableOfEnemies, newEnemy)
 				end
