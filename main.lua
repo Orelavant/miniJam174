@@ -7,10 +7,12 @@ end
 local Utils = require "utils"
 
 -- Config
+--- @enum gameStates
+GAME_STATES = {play=0, done=1, menu=2}
 local DebugMode = true
 
-local ScreenWidthMid = love.graphics.getWidth() / 2
-local ScreenHeightMid = love.graphics.getHeight() / 2
+local ScreenWidth = love.graphics.getWidth()
+local ScreenHeight = love.graphics.getHeight()
 White = {1, 1, 1, 1}
 Red = {1, 0, 0, 1}
 Green = {0, 1, 0, 0.5}
@@ -24,12 +26,14 @@ local ProjectileSpeed = 200
 local ProjectileColor = Red
 
 local Fence --- @type Fence
-local FenceX = ScreenWidthMid
-local FenceY = ScreenHeightMid - 150
+local FenceX = ScreenWidth / 2
+local FenceY = (ScreenHeight / 2) - 150
 
 -- Callbacks
 function love.load()
 	-- Globals
+	GameState = GAME_STATES.play
+	PartyHealth = 3
 	TableOfCircles = {} ---@type Circle[]
 	TableOfEnemies = {} ---@type Enemy[]
 	StartOfMove = true
@@ -42,7 +46,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidthMid, ScreenHeightMid, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor)
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor)
 	table.insert(TableOfCircles, Party)
 
 	Fence = FenceInit(FenceX, FenceY)
@@ -62,16 +66,34 @@ function love.update(dt)
 	end
 
 	-- Update enemies
-	for _, enemy in ipairs(TableOfEnemies) do
+	for i=#TableOfEnemies,1,-1 do
+		enemy = TableOfEnemies[i]
+
 		enemy:update(dt)
+
+		-- Fence collision
 		if Fence:circleCollided(enemy) then
 			enemy:setDizzy(true)
 			enemy = Fence:handleCircleCollision(enemy)
 		end
+
+		-- Party collision
+		if Party:checkCircleCollision(enemy) then
+			PartyHealth = PartyHealth - 1
+			table.remove(TableOfEnemies, i)
+		end
+	end
+
+	if PartyHealth <= 0 then
+		GameState = GAME_STATES.done
+		love.load()
 	end
 end
 
 function love.draw()
+	-- Health
+	love.graphics.print(PartyHealth, ScreenWidth-20, 0, 0, 2, 2)
+
 	-- Draw Circles
 	for _, circle in ipairs(TableOfCircles) do
 		circle:draw()

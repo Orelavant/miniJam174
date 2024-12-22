@@ -51,4 +51,14 @@ function Circle:handleScreenCollision()
 	end
 end
 
+function Circle:checkCircleCollision(circle)
+    -- Calculate the distance between the two circles
+    local dx = circle.x - self.x
+    local dy = circle.y - self.y
+    local distance = math.sqrt(dx^2 + dy^2)
+
+    -- Check if the circles are colliding
+    return distance < (self.radius + circle.radius)
+end
+
 return Circle

@@ -109,6 +109,8 @@ function Fence:handleCircleCollision(circle)
             circle.dy = -circle.dy -- Reverse vertical velocity
         end
     end
+
+	return circle
 end
 
 function Fence:circleCollided(circle)
