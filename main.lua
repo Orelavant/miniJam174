@@ -13,17 +13,23 @@ local DebugMode = true
 
 local ScreenWidth = love.graphics.getWidth()
 local ScreenHeight = love.graphics.getHeight()
-White = {1, 1, 1, 1}
-Red = {1, 0, 0, 1}
-Green = {0, 1, 0, 0.5}
+-- TODO move to seperate config file
+White = {1, 1, 1, 0.8}
+Red = {1, 0, 0, 0.8}
+Green = {0, 1, 0, 0.8}
+LightBlue = {0.68, 0.85, 0.9, 0.8}
+Orange = {1, 0.647, 0, 0.8}
 
 local PartyRadius = 25
 local PartySpeed = 60
-local PartyColor = Green
+local PartyColor = White
 
-local ProjectileRadius = 5
-local ProjectileSpeed = 200
-local ProjectileColor = Red
+local FireballColor = Red
+local FireballRadius = 5
+local FireballSpeed = 200
+local HealColor = Green
+local HealRadius = 5
+local HealSpeed = 200
 
 local Fence --- @type Fence
 local FenceX = ScreenWidth / 2
@@ -33,8 +39,8 @@ local FenceY = (ScreenHeight / 2) - 150
 function love.load()
 	-- Globals
 	GameState = GAME_STATES.play
-	PartyHealth = 3
-	TableOfCircles = {} ---@type Circle[]
+	PartyHealth = 20
+	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
 	StartOfMove = true
 	MousePos = {x=0, y=0}
@@ -43,11 +49,12 @@ function love.load()
 	-- Init classes
 	CircleInit = require "entities.circle"
 	EnemyInit = require "entities.enemy"
+	ProjectileInit = require "entities.projectile"
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor)
-	table.insert(TableOfCircles, Party)
+	---@type Circle
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 
 	Fence = FenceInit(FenceX, FenceY)
 end
@@ -59,10 +66,57 @@ function love.update(dt)
 	-- Update fence
 	Fence:update(love.mouse.isDown(1), MousePos.x, MousePos.y, dt)
 
-	-- Update circles
-	for _, circle in ipairs(TableOfCircles) do
-		circle:update(dt)
-		circle = Fence:handleCircleCollision(circle)
+	-- Update party and fence collision
+	Party:update(dt)
+	Party = Fence:handleCircleCollision(Party)
+
+	-- Update projectiles
+	for i=#TableOfProjectiles,1,-1 do
+		local projectile = TableOfProjectiles[i]
+
+		-- Move projectile
+		projectile:update(dt)
+		
+		-- Fence collision
+		projectile = Fence:handleCircleCollision(projectile)
+
+		-- Party collision
+		--- TODO move circle types to projectiles class
+		if Party:checkCircleCollision(projectile) and not projectile.justSpawned then
+			-- Resolve effect
+			if projectile.type == CIRCLE_TYPES.Fireball then
+				PartyHealth = PartyHealth - 1
+			elseif projectile.type == CIRCLE_TYPES.heal then
+				PartyHealth = PartyHealth + 1
+			end
+
+			-- Remove from table
+			table.remove(TableOfProjectiles, i)
+		end
+
+
+		-- Enemy collision
+		-- TODO fix bug with many projectiles getting removed that were not involved in collision and many enemies spawning (after heal hits them)
+		for i=#TableOfEnemies,1,-1 do
+			enemy = TableOfEnemies[i]
+
+			if enemy:checkCircleCollision(projectile) then
+				-- Resolve effect
+				if projectile.type == CIRCLE_TYPES.Fireball then
+					table.remove(TableOfEnemies, i)
+				elseif projectile.type == CIRCLE_TYPES.heal then
+					-- TODO spawn perpendicular to travel direction
+					-- Spawn enemy logic
+					-- local newEnemy  = EnemyInit(enemy.x-20, enemy.y, Utils.randFloat(), Utils.randFloat())
+					-- TODO make this speed boost decaying
+					enemy.speed = enemy.speed + 10
+					table.insert(TableOfEnemies, newEnemy)
+				end
+	
+				-- Remove from table
+				table.remove(TableOfProjectiles, i)
+			end
+		end
 	end
 
 	-- Update enemies
@@ -73,17 +127,18 @@ function love.update(dt)
 
 		-- Fence collision
 		if Fence:circleCollided(enemy) then
-			enemy:setDizzy(true)
 			enemy = Fence:handleCircleCollision(enemy)
+			enemy:setDizzy(true)
 		end
 
 		-- Party collision
 		if Party:checkCircleCollision(enemy) then
-			PartyHealth = PartyHealth - 1
+			PartyHealth = PartyHealth - 2
 			table.remove(TableOfEnemies, i)
 		end
 	end
 
+	-- Check if game over
 	if PartyHealth <= 0 then
 		GameState = GAME_STATES.done
 		love.load()
@@ -92,16 +147,15 @@ end
 
 function love.draw()
 	-- Health
-	love.graphics.print(PartyHealth, ScreenWidth-20, 0, 0, 2, 2)
+	love.graphics.print(PartyHealth, ScreenWidth-40, 0, 0, 2, 2)
 
 	-- Draw Circles
-	for _, circle in ipairs(TableOfCircles) do
+	Party:draw()
+	for _, circle in ipairs(TableOfProjectiles) do
 		circle:draw()
 	end
-
-	-- Draw Enemies
-	for _, enemy in ipairs(TableOfEnemies) do
-		enemy:draw()
+	for _, circle in ipairs(TableOfEnemies) do
+		circle:draw()
 	end
 
 	-- Draw Fence
@@ -116,12 +170,20 @@ end
 function love.keypressed(key)
 	-- Debugging spawn projectile
 	if DebugMode and key == "space" then
-		table.insert(TableOfCircles, CircleInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), ProjectileRadius, ProjectileSpeed, ProjectileColor))
+		-- TODO track nearest enemy, shoot Fireball at them
+		local fireball = ProjectileInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), FireballRadius, FireballSpeed, FireballColor, CIRCLE_TYPES.Fireball)
+		table.insert(TableOfProjectiles, fireball)
+	end
+
+	if DebugMode and key == "f" then
+		local heal = ProjectileInit(Party.x, Party.y, Utils.randFloat(), Utils.randFloat(), HealRadius, HealSpeed, HealColor, CIRCLE_TYPES.heal)
+		table.insert(TableOfProjectiles, heal)
 	end
 
 	-- Debugging enemy spawn
 	if DebugMode and key == "e" then
-		table.insert(TableOfEnemies, EnemyInit(love.math.random(EnemyRadius+5, love.graphics.getWidth()), EnemyRadius+5, Utils.randFloat(), Utils.randFloat()))
+		local enemy = EnemyInit(love.math.random(EnemyRadius+5, love.graphics.getWidth()), EnemyRadius+5, Utils.randFloat(), Utils.randFloat())
+		table.insert(TableOfEnemies, enemy)
 	end
 end
 

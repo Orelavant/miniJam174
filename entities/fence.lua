@@ -12,7 +12,7 @@ FENCE_STATES = {material=0, moving=1, immaterial=2}
 local width = 40
 local height = 5
 local speedMod = 1.5
-local color = White
+local color = LightBlue
 
 -- Constructor
 function Fence:new(x, y)
@@ -53,11 +53,22 @@ function Fence:update(mouseDown, mouseX, mouseY, dt)
 		StartOfMove = true
 
 		-- Make fence material again if not colliding with anything
+		-- TODO add util for adding all the circles into one table
 		if self.state == FENCE_STATES.immaterial then
+			-- Create table of all circles to check collisions against
+			local tableOfCircles = {Party}
+			for _, circle in ipairs(TableOfProjectiles) do
+				table.insert(tableOfCircles, circle)
+			end
+			for _, circle in ipairs(TableOfEnemies) do
+				table.insert(tableOfCircles, circle)
+			end
+
+			-- Check if colliding with any circles. If not, immaterial, if so, still immaterial
 			local colliding = false
 			local i = 1
-			while not colliding and i <= #TableOfCircles do
-				local circle = TableOfCircles[i]
+			while not colliding and i <= #tableOfCircles do
+				local circle = tableOfCircles[i]
 				if self:checkCircleCollision(circle) then
 					colliding = true
 				end

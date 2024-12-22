@@ -4,16 +4,16 @@ local Point = require "entities.point"
 ---@class Circle:Point
 local Circle = Point:extend()
 
+CIRCLE_TYPES = {party=0, enemy=1, fireball=2, heal=3}
+
 ---Constructor
----@param x number
----@param y number
----@param radius number
-function Circle:new(x, y, dx, dy, radius, speed, color)
+function Circle:new(x, y, dx, dy, radius, speed, color, type)
     Circle.super.new(self, x, y, color)
     self.dx = dx
     self.dy = dy
     self.radius = radius
     self.speed = speed
+    self.type = type
 end
 
 --- Update circle position
