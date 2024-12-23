@@ -1,0 +1,191 @@
+{
+    "title": "Kanban",
+    "cols": [
+        {
+            "title": "Bugs",
+            "tasks": [
+                {
+                    "text": "Better fence rotation",
+                    "id": "qlhzf6etzm5xfs011h3evhe9"
+                },
+                {
+                    "text": "Fix fence corner collision",
+                    "id": "fc26vrmsyf0i3kof5m2bo831"
+                },
+                {
+                    "text": "Fix weird enemy collision (try to just use the same exact code as circle?)",
+                    "id": "gg5wdv5pxnb1kb4guo3ilvar"
+                },
+                {
+                    "text": "Enemies should bounce off each other",
+                    "id": "z61je3izvpp4kb15u2tuiwyf"
+                },
+                {
+                    "text": "Find a way to put enemies in list of circles (even though update needs a diff param for enemy)",
+                    "id": "svvzxe79wpz6dnscuak4bqca"
+                },
+                {
+                    "text": "Collisions can still get funky sometimes (circle slides along rect edge, sometimes caught in circle)",
+                    "id": "voeb9or3740eqh7ndxvkmcg1"
+                }
+            ],
+            "id": "crk2fe93iwdq01mcjl3cd8hm",
+            "color": "#eb144c"
+        },
+        {
+            "title": "To-Do",
+            "tasks": [
+                {
+                    "text": "Screen shake",
+                    "id": "f8v27ol7lq1w7hq0tyyc5ex0"
+                },
+                {
+                    "text": "add all sfx\n",
+                    "id": "td4k9i1mdkpa9hawbe24wx7m"
+                },
+                {
+                    "text": "Test build",
+                    "id": "kmfbwqgjubcm4zhj6wp6jwta"
+                },
+                {
+                    "text": "Audio",
+                    "id": "fbv30c74u9px61qjyvo0yr22"
+                },
+                {
+                    "text": "Add party speech bubbles that appear whenever the speed increases",
+                    "id": "ynm2edvjlcca5uo13lgda31o"
+                },
+                {
+                    "text": "Add a road that they can travel along",
+                    "id": "xgmh4wmhwj0yu222ybz9mz4m"
+                },
+                {
+                    "text": "Add parallax affect that adjusts based off party speed rate, but it actually brings in OBSTACLES AS YOU GO",
+                    "id": "ngwdzsitlpryxjcy1asl4ym8"
+                },
+                {
+                    "text": "Add bushes for parallax affect",
+                    "id": "w584efe3kg72h4ai7x4xyvlp"
+                },
+                {
+                    "text": "Fireballs are shoot at nearest enemy, heal is shot at fence (or in revese if you want to be mean, or this could be a powerup (dumb potion))",
+                    "id": "nroz8o1e76ipai0xvuo5anr8"
+                },
+                {
+                    "text": "Enemies spawn furthest point from party",
+                    "id": "bv3i35i76exoyminfwx9ad4c"
+                },
+                {
+                    "text": "Fireballs slightly home in on enemies, healing slight home in on party? ",
+                    "id": "vdgd3vaea3yueaoxkbq11ejr"
+                },
+                {
+                    "text": "increase screen size, make arena",
+                    "id": "x8xz536sq8kg9uf6q97wosav"
+                },
+                {
+                    "text": "Powerups (lengthen fence)",
+                    "id": "eoa4dw0tryn03dhnoqtx2xf9"
+                },
+                {
+                    "text": "Icons for each member of the party (triangle for leader that rotates based off of circle dir, fence icon that rotates along with fence o mancer, ellipse for fire mage, smaller circle for healer)",
+                    "id": "kjvh0o31liv17ham7my5i0fx"
+                },
+                {
+                    "text": "Rework projectiles (less of them but bigger?, can damage multiple enemies?)",
+                    "id": "df4fvqdb3pwnfda0v5i98q4g"
+                },
+                {
+                    "text": "Adjust angle of fence using scroll wheel for precision, or a and d keys to snap to 90 degrees.",
+                    "id": "qxnj0k5jjsjxbtvrbzd74yy4"
+                },
+                {
+                    "text": "Circles bounce off each other?",
+                    "id": "iignh29jihemosoyp4volfel"
+                },
+                {
+                    "text": "Center fence above party start",
+                    "id": "ijt0jgb1vko4eh6iknjqejrf"
+                },
+                {
+                    "text": "Make it so you can \"curve\" the fence movement, think if you measure how far the mouse has traveled instead of distance that would work",
+                    "id": "z591nd00m5uu10e8886v4ovq"
+                },
+                {
+                    "text": "Projectiles fizzle out either on enemy hit or after traveling for a while (they go from bright red and lose transparency until they dissapear and slow down)",
+                    "id": "rv59356oa36cafzxuz1b3h65"
+                }
+            ],
+            "id": "rij0ns8g5s3r1lh8kvv9oau1",
+            "color": "#fcb900"
+        },
+        {
+            "title": "Doing",
+            "tasks": [],
+            "id": "ato4u64a1jr504uhlexxlmwm",
+            "color": "#0693e3"
+        },
+        {
+            "title": "Done",
+            "tasks": [
+                {
+                    "text": "Add controls to readme",
+                    "id": "cy5nyqdh8zrkp489pnb8ag7n"
+                },
+                {
+                    "text": "BUG -> FEATURE: \n- Collision detection hard when fence follows mouse, lets change fence movement so it's not so precise\n- Collision detection hard when fence moving, so when moving it does't block anything, which is great for letting fireballs through!",
+                    "id": "faovkbz90wlmcyfv6n7govn7"
+                },
+                {
+                    "text": "Create a moving party",
+                    "id": "l2q4eowwgnozzyzlm41w0ur8"
+                },
+                {
+                    "text": "Fence State should be updated via a method and checked against enum to avoid string typos",
+                    "id": "iufmlbyuq5r82d7otqsujfl4"
+                },
+                {
+                    "text": "Make a folder structure",
+                    "id": "wdr7muvymo9i60uhdcj5sgd2"
+                },
+                {
+                    "text": "Organize code",
+                    "id": "hajfvk7jzqyq54t9sx3gadyf"
+                },
+                {
+                    "text": "Enemies",
+                    "id": "u55faxjvnj2l5lf89y5nz0yt"
+                },
+                {
+                    "text": "TIMER NEXT FOR SHOOTING PROJECTILSE",
+                    "id": "hm45sdxkwhhhbh7zopnojv68"
+                },
+                {
+                    "text": "Be able to rotate fence",
+                    "id": "wkdddczyrf31g15w1z6fwtxx"
+                },
+                {
+                    "text": "Heal empowers enemies (probs go faster is easiest, duplicate, but could give more health?)",
+                    "id": "jay83dtsihvaml6httizx1i7"
+                },
+                {
+                    "text": "Party Abilities",
+                    "id": "z3awqc3wff7xnse5gkwrxyjk"
+                },
+                {
+                    "text": "Projectiles shoot on a timer",
+                    "id": "t3v34do3p5rtvqlaw2qzekvl"
+                },
+                {
+                    "text": "Score",
+                    "id": "biah55ovx0s9kosp7ok37av3"
+                }
+            ],
+            "id": "luyijiiw9l02iv5z4lry3qfc",
+            "color": "#00d084"
+        }
+    ],
+    "autosave": true,
+    "saveToFile": true,
+    "timestamp": 1734909376132
+}

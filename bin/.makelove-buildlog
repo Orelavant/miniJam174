@@ -1,0 +1,13 @@
+[
+    {
+        "version": "0.1",
+        "build_time": "Sun, 22 Dec 2024 20:32:15 -0500",
+        "targets": [
+            "win32",
+            "win64",
+            "macos",
+            "lovejs"
+        ],
+        "completed": true
+    }
+]
