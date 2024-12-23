@@ -1,7 +1,7 @@
 -- Debugger
--- if arg[2] == "debug" then
--- 	require("lldebugger").start()
--- end
+if arg[2] == "debug" then
+	require("lldebugger").start()
+end
 
 -- Imports
 local Utils = require "utils"
@@ -357,12 +357,12 @@ function resetGame()
 end
 
 -- -- make error handling nice
--- local love_errorhandler = love.errorhandler
+local love_errorhandler = love.errorhandler
 
--- function love.errorhandler(msg)
--- 	if lldebugger then
--- 		error(msg, 2)
--- 	else
--- 		return love_errorhandler(msg)
--- 	end
--- end
+function love.errorhandler(msg)
+	if lldebugger then
+		error(msg, 2)
+	else
+		return love_errorhandler(msg)
+	end
+end
