@@ -49,9 +49,9 @@ Similar: Fence-o-mancy, Fence-o-movery, Fence-o-whatsit
 
 ___________________________________________________________________________
 
-To Build:
+To Build From Source (WIP):
 
-Run makelove
+Run makelove 
 ___________________________________________________________________________
 
 Credit:
