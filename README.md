@@ -26,8 +26,11 @@ ___________________________________________________________________________
 Terminology:
 
 **Defencemancer**
+
 De·fence·man·cer
+
 /dɪfˈɛnsɪmənsə/
+
 *noun*
 
 1. A practitioner of *fencery* - the magic of keeping the helpful near, and the dangerous far. Commonly hired by inexperienced adventuring parties for protection with coin to spare.
@@ -37,8 +40,11 @@ Similar: Defence-o-mancer, Defence-master, De-fence-man, De-fence-guy
 <br/>
 
 **Fencery**
+
 Fen·ce·ry
+
 /fˈɛnsəɹi/
+
 *noun*
 
 1. The art of fence manipulation - telepathically moving quantum particles which coalesce into a fence-like formation. The particles will oscillate (upon the user exerting their willpower) between material and immaterial properties.
