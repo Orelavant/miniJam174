@@ -5,6 +5,10 @@
             "title": "Bugs",
             "tasks": [
                 {
+                    "text": "Fix lua debugger not showing the err msg when debugging anymore",
+                    "id": "gldulj34yuuxmr33t0p6t3nx"
+                },
+                {
                     "text": "Better fence rotation",
                     "id": "qlhzf6etzm5xfs011h3evhe9"
                 },
@@ -36,6 +40,18 @@
             "title": "To-Do",
             "tasks": [
                 {
+                    "text": "menu screen",
+                    "id": "fbd8ccdyd8wdiypsxpmj8uk7"
+                },
+                {
+                    "text": "Game over sound",
+                    "id": "zvwfo4755m9vem455mjssakp"
+                },
+                {
+                    "text": "Add bushes for parallax affect",
+                    "id": "w584efe3kg72h4ai7x4xyvlp"
+                },
+                {
                     "text": "Add parallax affect that adjusts based off party speed rate, but it actually brings in OBSTACLES AS YOU GO",
                     "id": "ngwdzsitlpryxjcy1asl4ym8"
                 },
@@ -46,10 +62,6 @@
                 {
                     "text": "Add a road that they can travel along",
                     "id": "xgmh4wmhwj0yu222ybz9mz4m"
-                },
-                {
-                    "text": "Add bushes for parallax affect",
-                    "id": "w584efe3kg72h4ai7x4xyvlp"
                 },
                 {
                     "text": "Fireballs are shoot at nearest enemy, heal is shot at fence (or in revese if you want to be mean, or this could be a powerup (dumb potion))",
@@ -187,5 +199,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1734919859576
+    "timestamp": 1734921659768
 }

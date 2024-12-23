@@ -9,7 +9,7 @@ local Utils = require "utils"
 -- Config
 --- @enum gameStates
 GAME_STATES = {play=0, done=1, menu=2}
-local DebugMode = true
+local DebugMode = false
 
 local Song = love.audio.newSource("audio/spaceJazz.mp3", "stream")
 Song:setVolume(0.5)
@@ -35,6 +35,10 @@ local ScreenWidth = love.graphics.getWidth()
 local ScreenWidthMid = ScreenWidth / 2
 local ScreenHeight = love.graphics.getHeight()
 local ScreenHeightMid  = ScreenHeight / 2
+
+local BushImg = love.graphics.newImage("visual/bush.png")
+local BushColor = {83 / 255, 216 / 255, 121 / 255, 0.3}
+local MaxBushCount = 10
 
 local PartyRadius = 25
 local PartyColor = White
@@ -81,12 +85,15 @@ function love.load()
 	PartyTimer = InitPartySpeedModRate
 	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
+	TableOfBushes = {}
 	StartOfMove = true
 	MousePos = {x=0, y=0}
 	MouseDragStart = {x=0, y=0}
 	ShakeDuration = 0
 	ShakeWait = 0
 	ShakeOffset = {x = 0, y = 0}
+
+	BushCount = 0
 
 	FireballTimer = FireballSpawnRate
 	CurrFireballRadius = 0
@@ -114,6 +121,9 @@ end
 function love.update(dt)
 	-- Get position of mouse
 	MousePos.x, MousePos.y = love.mouse.getPosition()
+
+	-- Spawn bushes
+	bushSpawner()
 
 	-- Screenshake
 	if ShakeDuration > 0 then
@@ -253,6 +263,11 @@ function love.draw()
 		love.graphics.translate(love.math.random(-5,5), love.math.random(-5,5))
 	end
 
+	-- Draw Bushes
+	for _, bush in ipairs(TableOfBushes) do
+		drawBush(bush)
+	end
+
 	-- Draw Circles
 	Party:draw()
 	for _, projectile in ipairs(TableOfProjectiles) do
@@ -379,6 +394,23 @@ function updateChargeRadius(currRadius, targetRadius, projectileSpawnRate, dt)
     end
 
 	return currRadius
+end
+
+function bushSpawner()
+	if BushCount <= MaxBushCount then
+		spawnBush(love.math.random(ScreenWidth, ScreenHeight))
+		BushConut = BushCount + 1
+	end
+end
+
+function spawnBush(x, y)
+	table.insert(TableOfBushes, {x=x, y=y, r=love.math.random(0, 2 * math.pi)})
+end
+
+function drawBush(bush)
+	love.graphics.setColor(BushColor)
+	love.graphics.draw(BushImg, bush.x, bush.y, bush.rotation, 0.1, 0.1, BushImg:getWidth() / 2, BushImg:getHeight() / 2)
+	love.graphics.setColor(White)
 end
 
 function resetGame()

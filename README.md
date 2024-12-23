@@ -5,7 +5,7 @@ ___________________________________________________________________________
 
 Description:
 
-Play as a defencemancer - using your one magical fence to protect your adventuring party.
+Play as a Defencemancer - using your one magical fence to protect your adventuring party.
 
 Do all that you can to direct the party’s reckless attacks against our foes and redirect the party's support to their intended target.
 Do even more to protect yourself.
