@@ -5,7 +5,7 @@ if arg[2] == "debug" then
 end
 
 -- Imports
-local Utils = require "src.utils"
+local Utils = require "utils"
 
 -- Config
 --- @enum gameStates

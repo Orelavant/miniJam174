@@ -12,7 +12,7 @@
     },
     {
         "version": "0.2",
-        "build_time": "Sun, 22 Dec 2024 22:35:45 -0500",
+        "build_time": "Sun, 22 Dec 2024 22:44:27 -0500",
         "targets": [
             "win32",
             "win64",

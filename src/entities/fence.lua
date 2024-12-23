@@ -1,5 +1,5 @@
 local Rectangle = require "entities.rectangle"
-local Utils = require "src.utils"
+local Utils = require "utils"
 
 ---@class Fence:Rectangle
 local Fence = Rectangle:extend()
