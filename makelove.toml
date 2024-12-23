@@ -1,7 +1,9 @@
 name = "Defencemancer"
-default_targets = ["win32", "win64", "macos", "lovejs"]
+default_targets = ["win64"]
 build_directory = "bin"
 
 love_files = [
     "+*",
+    "-*/.*",
+    "-bin/*"
 ]

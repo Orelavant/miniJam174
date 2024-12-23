@@ -5,7 +5,7 @@
             "title": "Bugs",
             "tasks": [
                 {
-                    "text": "Fix lua debugger not showing the err msg when debugging anymore",
+                    "text": "Fix lua debugger not showing the err msg when debugging anymore (move .vscode into src and see if that works!)",
                     "id": "gldulj34yuuxmr33t0p6t3nx"
                 },
                 {
@@ -199,5 +199,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1734921659768
+    "timestamp": 1734924329959
 }
