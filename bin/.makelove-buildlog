@@ -9,5 +9,16 @@
             "lovejs"
         ],
         "completed": true
+    },
+    {
+        "version": "0.2",
+        "build_time": "Sun, 22 Dec 2024 22:13:49 -0500",
+        "targets": [
+            "win32",
+            "win64",
+            "macos",
+            "lovejs"
+        ],
+        "completed": true
     }
 ]

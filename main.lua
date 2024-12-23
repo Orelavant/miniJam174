@@ -1,5 +1,6 @@
 -- Debugger
 if arg[2] == "debug" then
+	print(arg[2])
 	require("lldebugger").start()
 end
 
@@ -123,7 +124,7 @@ function love.update(dt)
 	MousePos.x, MousePos.y = love.mouse.getPosition()
 
 	-- Spawn bushes
-	bushSpawner()
+	-- bushSpawner()
 
 	-- Screenshake
 	if ShakeDuration > 0 then
@@ -421,7 +422,6 @@ end
 
 -- -- make error handling nice
 local love_errorhandler = love.errorhandler
-
 function love.errorhandler(msg)
 	if lldebugger then
 		error(msg, 2)
