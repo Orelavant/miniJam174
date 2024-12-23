@@ -13,8 +13,10 @@ local DebugMode = true
 
 local Song = love.audio.newSource("audio/spaceJazz.mp3", "stream")
 Song:setVolume(0.5)
-local FireballShotSfx = love.audio.newSource("audio/fireball.wav", "static")
+local PartyDamageSfx = love.audio.newSource("audio/partyDamage.wav", "static")
+local ProjectileShotSfx = love.audio.newSource("audio/fireball.wav", "static")
 local EnemyDeathSfx = love.audio.newSource("audio/enemyDeath2.wav", "static")
+WallBounceSfx = love.audio.newSource("audio/wallBounce.wav", "static")
 BounceSfxTable = {
 	love.audio.newSource("audio/bounce1.wav", "static"),
 	love.audio.newSource("audio/bounce2.wav", "static")
@@ -82,6 +84,9 @@ function love.load()
 	StartOfMove = true
 	MousePos = {x=0, y=0}
 	MouseDragStart = {x=0, y=0}
+	ShakeDuration = 0
+	ShakeWait = 0
+	ShakeOffset = {x = 0, y = 0}
 
 	FireballTimer = FireballSpawnRate
 	CurrFireballRadius = 0
@@ -109,6 +114,18 @@ end
 function love.update(dt)
 	-- Get position of mouse
 	MousePos.x, MousePos.y = love.mouse.getPosition()
+
+	-- Screenshake
+	if ShakeDuration > 0 then
+		ShakeDuration = ShakeDuration - dt
+		if ShakeWait > 0 then
+			ShakeWait = ShakeWait - dt
+		else
+			ShakeOffset.x = love.math.random(-5,5)
+			ShakeOffset.y = love.math.random(-5,5)
+			ShakeWait = 0.05
+		end
+	end
 
 	-- Update charge radiuses
 	CurrHealRadius = updateChargeRadius(CurrHealRadius, PartyRadius, HealSpawnRate, dt)
@@ -168,6 +185,8 @@ function love.update(dt)
 			-- Resolve effect
 			if projectile.type == CIRCLE_TYPES.Fireball then
 				PartyHealth = PartyHealth - 1
+				PartyDamageSfx:play()
+				ShakeDuration = 0.15
 			elseif projectile.type == CIRCLE_TYPES.heal then
 				PartyHealth = PartyHealth + 2
 			end
@@ -225,6 +244,15 @@ function love.update(dt)
 end
 
 function love.draw()
+	-- Screenshake
+	-- From sheepolution
+	if ShakeDuration > 0 then
+		-- Translate with a random number between -5 an 5.
+		-- This second translate will be done based on the previous translate.
+		-- So it will not reset the previous translate.
+		love.graphics.translate(love.math.random(-5,5), love.math.random(-5,5))
+	end
+
 	-- Draw Circles
 	Party:draw()
 	for _, projectile in ipairs(TableOfProjectiles) do
@@ -251,6 +279,7 @@ function love.draw()
 	-- Score and Health
 	love.graphics.print("Health: " .. PartyHealth, ScreenWidth-60, 0, 0, 1, 1)
 	love.graphics.print("Score: " .. Score, 0, 0, 0, 1, 1)
+
 end
 
 function love.keypressed(key)
@@ -302,7 +331,7 @@ function spawnFireball()
 		)
 		table.insert(TableOfProjectiles, fireball)
 
-		FireballShotSfx:play()
+		ProjectileShotSfx:play()
 end
 
 function spawnHeal()
@@ -324,6 +353,8 @@ function spawnHeal()
 		HealDecay
 	)
 	table.insert(TableOfProjectiles, heal)
+
+	ProjectileShotSfx:play()
 end
 
 function spawnEnemy()

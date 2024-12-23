@@ -36,20 +36,8 @@
             "title": "To-Do",
             "tasks": [
                 {
-                    "text": "Screen shake",
-                    "id": "f8v27ol7lq1w7hq0tyyc5ex0"
-                },
-                {
-                    "text": "add all sfx\n",
-                    "id": "td4k9i1mdkpa9hawbe24wx7m"
-                },
-                {
-                    "text": "Test build",
-                    "id": "kmfbwqgjubcm4zhj6wp6jwta"
-                },
-                {
-                    "text": "Audio",
-                    "id": "fbv30c74u9px61qjyvo0yr22"
+                    "text": "Add parallax affect that adjusts based off party speed rate, but it actually brings in OBSTACLES AS YOU GO",
+                    "id": "ngwdzsitlpryxjcy1asl4ym8"
                 },
                 {
                     "text": "Add party speech bubbles that appear whenever the speed increases",
@@ -58,10 +46,6 @@
                 {
                     "text": "Add a road that they can travel along",
                     "id": "xgmh4wmhwj0yu222ybz9mz4m"
-                },
-                {
-                    "text": "Add parallax affect that adjusts based off party speed rate, but it actually brings in OBSTACLES AS YOU GO",
-                    "id": "ngwdzsitlpryxjcy1asl4ym8"
                 },
                 {
                     "text": "Add bushes for parallax affect",
@@ -129,6 +113,22 @@
             "title": "Done",
             "tasks": [
                 {
+                    "text": "Audio",
+                    "id": "fbv30c74u9px61qjyvo0yr22"
+                },
+                {
+                    "text": "Test build",
+                    "id": "kmfbwqgjubcm4zhj6wp6jwta"
+                },
+                {
+                    "text": "Screen shake",
+                    "id": "f8v27ol7lq1w7hq0tyyc5ex0"
+                },
+                {
+                    "text": "add all sfx\n",
+                    "id": "td4k9i1mdkpa9hawbe24wx7m"
+                },
+                {
                     "text": "Add controls to readme",
                     "id": "cy5nyqdh8zrkp489pnb8ag7n"
                 },
@@ -187,5 +187,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1734909376132
+    "timestamp": 1734919859576
 }

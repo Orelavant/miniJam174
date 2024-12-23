@@ -41,18 +41,22 @@ function Circle:handleScreenCollision()
     if self.x - self.radius < 0 then
         self.x = self.radius -- Push circle out of the left wall
         self.dx = -self.dx
+        WallBounceSfx:play()
     elseif self.x + self.radius > self.screenWidth then
         self.x = self.screenWidth - self.radius -- Push circle out of the right wall
         self.dx = -self.dx
+        WallBounceSfx:play()
     end
 
     -- Collision on y axis
     if self.y - self.radius < 0 then
         self.y = self.radius -- Push circle out of the top wall
         self.dy = -self.dy
+        WallBounceSfx:play()
     elseif self.y + self.radius > self.screenHeight then
         self.y = self.screenHeight - self.radius -- Push circle out of the bottom wall
         self.dy = -self.dy
+        WallBounceSfx:play()
     end
 end
 
