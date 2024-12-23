@@ -49,6 +49,11 @@ Similar: Fence-o-mancy, Fence-o-movery, Fence-o-whatsit
 
 ___________________________________________________________________________
 
+To Build:
+
+Run makelove in src folder
+___________________________________________________________________________
+
 Credit:
 
 Programming and Audio:
