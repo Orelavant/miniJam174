@@ -5,10 +5,6 @@
             "title": "Bugs",
             "tasks": [
                 {
-                    "text": "Fix lua debugger not showing the err msg when debugging anymore (move .vscode into src and see if that works!)",
-                    "id": "gldulj34yuuxmr33t0p6t3nx"
-                },
-                {
                     "text": "Better fence rotation",
                     "id": "qlhzf6etzm5xfs011h3evhe9"
                 },
@@ -40,8 +36,20 @@
             "title": "To-Do",
             "tasks": [
                 {
+                    "text": "Game over screen so people can look at their final scores",
+                    "id": "mafpuqgmtj8me4json3yyfhc"
+                },
+                {
+                    "text": "cupo intro screen",
+                    "id": "curgxbtqf3dd3zjrrtnx0lkw"
+                },
+                {
                     "text": "menu screen",
                     "id": "fbd8ccdyd8wdiypsxpmj8uk7"
+                },
+                {
+                    "text": "Heal sound hitting enemies or yourself",
+                    "id": "wx34391f1vhdlrbor6445adq"
                 },
                 {
                     "text": "Game over sound",
@@ -125,6 +133,10 @@
             "title": "Done",
             "tasks": [
                 {
+                    "text": "Fix lua debugger not showing the err msg when debugging anymore (move .vscode into src and see if that works!)",
+                    "id": "gldulj34yuuxmr33t0p6t3nx"
+                },
+                {
                     "text": "Audio",
                     "id": "fbv30c74u9px61qjyvo0yr22"
                 },
@@ -199,5 +211,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1734924329959
+    "timestamp": 1735055299313
 }

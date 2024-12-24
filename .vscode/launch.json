@@ -9,9 +9,12 @@
           "command": "love"
         },
         "args": [
-          ".",
+          "src",
           "debug"
         ],
+        "scriptRoots": [
+          "src"
+        ]
       },
       {
         "type": "lua-local",
@@ -21,8 +24,11 @@
           "command": "love"
         },
         "args": [
-          ".",
+          "src",
         ],
+        "scriptRoots": [
+          "src"
+        ]
       },
     ]
   }

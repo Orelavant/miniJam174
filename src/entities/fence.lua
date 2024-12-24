@@ -130,9 +130,13 @@ end
 function Fence:rotate()
 	self.state = FENCE_STATES.immaterial
 
+	self.x = self.x + ((self.width / 2) - (self.height / 2))
+	self.y = self.y - ((self.width - self.height) / 2)
+
 	local temp = self.width
 	self.width = self.height
 	self.height = temp
+
 end
 
 function Fence:bounceSfx()
