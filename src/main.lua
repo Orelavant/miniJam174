@@ -39,17 +39,16 @@ local ScreenHeight = love.graphics.getHeight()
 
 local BushImg = love.graphics.newImage("visual/bush.png")
 local BushScale = 0.025
-local InitBushCount = 10
 local MaxBushCount = 10
 
 local PartyRadius = 25
 local PartyColor = White
-local PartySpeedMod = 10
-local InitPartySpeed = 50
-local InitPartySpeedModRate = 21
+local GlobalSpeedMod = 10
+local GlobalSpeed = 50
+local InitGlobalSpeedModRate = 21
 local InitPartyHealth = 5
 local DebugPartyHealth = 9999
-local PartySpeedModRate = 25
+local GlobalSpeedModRate = 25
 
 local FenceX = ScreenWidth / 2
 local FenceY = ScreenHeight / 2 - 150
@@ -89,14 +88,14 @@ function love.load()
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
 	Score = 0
-	-- Todo have a func that sets all vars relavant to debug modes or not
+	-- TODO have a func that sets all vars relavant to debug modes or not
 	if DebugMode then
 		PartyHealth = DebugPartyHealth
 	else
 		PartyHealth = InitPartyHealth
 	end
-	PartySpeed = InitPartySpeed
-	PartyTimer = InitPartySpeedModRate
+	PartySpeed = GlobalSpeed
+	PartyTimer = InitGlobalSpeedModRate
 	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
 	TableOfBushes = {}
@@ -106,6 +105,7 @@ function love.load()
 	ShakeDuration = 0
 	ShakeWait = 0
 	ShakeOffset = {x = 0, y = 0}
+
 
 	FireballTimer = FireballSpawnRate
 	CurrFireballRadius = 0
@@ -121,8 +121,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	-- Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, -1, -1, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, 1, 0, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
@@ -152,14 +151,14 @@ function love.update(dt)
 	CurrHealRadius = updateChargeRadius(CurrHealRadius, PartyRadius, HealSpawnRate, dt)
 	CurrFireballRadius = updateChargeRadius(CurrFireballRadius, PartyRadius, FireballSpawnRate, dt)
 
-	-- Update speed of everything on timer
+	-- TODO Update speed of everything on timer
 	if PartyTimer > 0 then
 		PartyTimer = PartyTimer - dt
 	else
-		Party.speed = PartySpeed + PartySpeedMod
+		Party.speed = PartySpeed + GlobalSpeedMod
 
 		-- Reset timer
-		PartyTimer = PartySpeedModRate
+		PartyTimer = GlobalSpeedModRate
 	end
 
 	-- Spawn timers
@@ -263,7 +262,9 @@ function love.update(dt)
 
 	-- Update values based off player's direction of travel
 	CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
+	CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
 	CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
+	CameraScreenYZero = CameraScreenYZero + Party.speed * Party.dy * dt
 	Fence.x = Fence.x + Party.speed * Party.dx * dt
 	Fence.y = Fence.y + Party.speed * Party.dy * dt
 
@@ -317,7 +318,8 @@ function love.draw()
 	end
 
 	-- Score and Health
-	love.graphics.print("Health: " .. PartyHealth, ScreenWidth-60, 0, 0, 1, 1)
+	local healthString = "Health: " .. PartyHealth
+	love.graphics.print(healthString, ScreenWidth-string.len(healthString) * 7, 0, 0, 1, 1)
 	love.graphics.print("Score: " .. Score, 0, 0, 0, 1, 1)
 end
 
@@ -421,7 +423,7 @@ function updateChargeRadius(currRadius, targetRadius, projectileSpawnRate, dt)
 end
 
 function initBushSpawn()
-	for i=0,InitBushCount do
+	for i=0,MaxBushCount do
 		local randomX = love.math.random(0, ScreenWidth)
 		local randomY = love.math.random(0, ScreenHeight)
 
@@ -430,25 +432,53 @@ function initBushSpawn()
 end
 
 function bushManager()
-	-- Spawning based off of party direction of travel
-	if #TableOfBushes <= MaxBushCount then
-		if Party.dx >= 0 and Party.dy >= 0 then
-			spawnBush(love.math.random(CameraScreenWidth / 2, CameraScreenWidth), love.math.random(CameraScreenHeight / 2, CameraScreenHeight), BushScale)
-		elseif Party.dx >= 0 and Party.dy < 0 then
-			spawnBush(love.math.random(CameraScreenWidth / 2, CameraScreenWidth), love.math.random(0, CameraScreenHeight / 2), BushScale)
-		elseif Party.dx < 0 and Party.dy >= 0 then
-			spawnBush(love.math.random(0, CameraScreenWidth / 2), love.math.random(CameraScreenHeight / 2, CameraScreenHeight), BushScale)
-		else
-			spawnBush(love.math.random(0, CameraScreenWidth / 2), love.math.random(0, CameraScreenHeight / 2), BushScale)
-		end
-	end
-
 	-- Remove bushes when they go off screen
 	for i=#TableOfBushes,1,-1 do
 		local bush = TableOfBushes[i]
 
-		if bush.x <= 0 or bush.x >= CameraScreenWidth or bush.y <= 0 or bush.y >= CameraScreenHeight then
+		if bush.x <= CameraScreenXZero or bush.x >= CameraScreenWidth or bush.y <= CameraScreenYZero or bush.y >= CameraScreenHeight then
 			table.remove(TableOfBushes, i)
+		end
+	end
+
+	-- X edge of screen table, then Y edge of screen table
+	-- Organized by quadrants if you start in top left and travel in Z formation between quadrants
+	-- TODO test if this needs to be here or can go up above and values in table are also updated
+	-- TODO uncommented code is here if the direction of the party can change (for example, if they move slightly faster than the camera)
+	-- TODO COULD DO CALCULATED SPAWN RANGE INSTEAD? THINK ABOUT THAT. SO THAT IF NOT TRAVELING TOWARDS CORNER< SPAWNS ALONG SCREEN EDGE ISNTEAD
+	local cameraScreenXZeroPlusOne = CameraScreenXZero + 10
+	local cameraScreenYZeroPlusOne = CameraScreenYZero + 10
+	local BushSpawnTable = {
+		{
+			{love.math.random(cameraScreenXZeroPlusOne, CameraScreenWidth / 2), cameraScreenYZeroPlusOne},
+			{love.math.random(CameraScreenWidth / 2, CameraScreenWidth), cameraScreenYZeroPlusOne},
+			{love.math.random(cameraScreenXZeroPlusOne, CameraScreenWidth / 2), CameraScreenHeight},
+			{love.math.random(CameraScreenWidth / 2, CameraScreenWidth), CameraScreenHeight},
+		},
+		{
+			{cameraScreenXZeroPlusOne, love.math.random(cameraScreenYZeroPlusOne, CameraScreenHeight / 2)},
+			{cameraScreenXZeroPlusOne, love.math.random(CameraScreenHeight / 2, CameraScreenHeight)},
+			{CameraScreenWidth, love.math.random(cameraScreenYZeroPlusOne, CameraScreenHeight / 2)},
+			{CameraScreenWidth, love.math.random(CameraScreenHeight / 2, CameraScreenHeight)},
+		}
+	}
+
+	-- Spawning based off of party direction of travel
+	-- We only want to spawn on edges of screen, so this var decides that
+	local xOrYEdgeSpawn = love.math.random(2)
+	-- TODO if jsut traveling to right, then use this inteasd
+	-- if #TableOfBushes <= MaxBushCount then
+	-- 	spawnBush(CameraScreenWidth, love.math.random(CameraScreenHeight), BushScale)
+	-- end
+	if #TableOfBushes <= MaxBushCount then
+		if Party.dx <= 0 and Party.dy <= 0 then
+			spawnBush(BushSpawnTable[xOrYEdgeSpawn][1][1], BushSpawnTable[xOrYEdgeSpawn][1][2], BushScale)
+		elseif Party.dx >= 0 and Party.dy <= 0 then
+			spawnBush(BushSpawnTable[xOrYEdgeSpawn][2][1], BushSpawnTable[xOrYEdgeSpawn][2][2], BushScale)
+		elseif Party.dx >= 0 and Party.dy >= 0 then
+			spawnBush(BushSpawnTable[xOrYEdgeSpawn][3][1], BushSpawnTable[xOrYEdgeSpawn][3][2], BushScale)
+		else
+			spawnBush(BushSpawnTable[xOrYEdgeSpawn][4][1], BushSpawnTable[xOrYEdgeSpawn][4][2], BushScale)
 		end
 	end
 end

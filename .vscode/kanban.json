@@ -5,12 +5,12 @@
             "title": "Bugs",
             "tasks": [
                 {
-                    "text": "Fix collision on 0 ends of screen (cause now camera is moving)",
-                    "id": "rdx3jx6j2inr35am1uxax6w7"
+                    "text": "Fix bush spawning bug, they need to spawn on edge of screen",
+                    "id": "rf797p9cavq9v5475lyo0ki6"
                 },
                 {
-                    "text": "Fix bush spawning bug",
-                    "id": "rf797p9cavq9v5475lyo0ki6"
+                    "text": "Think about how to resolve balls that are bouncing around screen",
+                    "id": "vsf9aahpuf7djszfvzolu9rg"
                 },
                 {
                     "text": "Fix bushes mixes pixels (thicker brush?",
@@ -36,6 +36,18 @@
             "title": "To-Do",
             "tasks": [
                 {
+                    "text": "Try it so that the camera doesn't quite update until party reaches edges of screen?",
+                    "id": "zrt60mosc3mqayr0p88x0oe2"
+                },
+                {
+                    "text": "Update speed of everything on timer, everything needs to be translated based off of camera movement.",
+                    "id": "a7a7nvza0iprhx1r1cyjfclq"
+                },
+                {
+                    "text": "Create road that party should travel along!! and it's better to because they don't spawn along that road!!\n\nCould perlin noise be used here??",
+                    "id": "vo97h0oz85pqg2qgwm28yni3"
+                },
+                {
                     "text": "ORGANIZE/REFACTOR DA CODE AGGHHH",
                     "id": "i0fcs52jw2gwed6axs4l26vi"
                 },
@@ -54,6 +66,14 @@
                 {
                     "text": "Heal sound hitting enemies or yourself",
                     "id": "wx34391f1vhdlrbor6445adq"
+                },
+                {
+                    "text": "Upload gifs to game page",
+                    "id": "ym7o2tyuev08o0kdczjny7y8"
+                },
+                {
+                    "text": "High scores page on itch",
+                    "id": "dz87g5azchnoqrc8xt8ub44f"
                 },
                 {
                     "text": "Game over sound",
@@ -76,6 +96,10 @@
                     "id": "xgmh4wmhwj0yu222ybz9mz4m"
                 },
                 {
+                    "text": "Compose jig on tin whilstle for soundtrack",
+                    "id": "xgk052wy1tzukhso3scyqhjd"
+                },
+                {
                     "text": "Fireballs are shoot at nearest enemy, heal is shot at fence (or in revese if you want to be mean, or this could be a powerup (dumb potion))",
                     "id": "nroz8o1e76ipai0xvuo5anr8"
                 },
@@ -88,8 +112,28 @@
                     "id": "vdgd3vaea3yueaoxkbq11ejr"
                 },
                 {
+                    "text": "Spawn obstacles for things to bounce off of",
+                    "id": "zcdf6ktf3lf80h17loxd6dqt"
+                },
+                {
+                    "text": "Rougelike elements. Slowly introduce party members, growing the party in size and speed. Playhers can pick which party members get added?",
+                    "id": "soskwp2bhji6fu23lxpblpq0"
+                },
+                {
+                    "text": "Lua extension that catches more syntax errs? (now putting enough args in funcs, stuff like that)",
+                    "id": "bvw2gnupp140hlyo1b8imab0"
+                },
+                {
                     "text": "Might be cooler if you had to focus on bouncing one fireball around towards the enemies, instead of managing many fireballs?",
                     "id": "yjals9wupxnbkz27l8kt8i6u"
+                },
+                {
+                    "text": "Two player mode?",
+                    "id": "r09rc5yikvxa17tc28gp6m7j"
+                },
+                {
+                    "text": "Heal big and passes through circles but not fence?",
+                    "id": "qnqpcq9ftj350unxuqtjj3pa"
                 },
                 {
                     "text": "increase screen size, make arena",
@@ -98,6 +142,10 @@
                 {
                     "text": "Powerups (lengthen fence)",
                     "id": "eoa4dw0tryn03dhnoqtx2xf9"
+                },
+                {
+                    "text": "Health shoots at enemies, fireball shoots at fence? or vice versa if you want to be nice",
+                    "id": "z3qazyjzgouesikw902ak5h3"
                 },
                 {
                     "text": "Icons for each member of the party (triangle for leader that rotates based off of circle dir, fence icon that rotates along with fence o mancer, ellipse for fire mage, smaller circle for healer)",
@@ -140,6 +188,10 @@
         {
             "title": "Done",
             "tasks": [
+                {
+                    "text": "Fix collision on 0 ends of screen (cause now camera is moving)",
+                    "id": "rdx3jx6j2inr35am1uxax6w7"
+                },
                 {
                     "text": "Collisions can still get funky sometimes (circle slides along rect edge, sometimes caught in circle)",
                     "id": "voeb9or3740eqh7ndxvkmcg1"
@@ -235,5 +287,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1735094656562
+    "timestamp": 1735103454725
 }

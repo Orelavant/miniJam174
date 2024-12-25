@@ -41,7 +41,7 @@ end
 
 --- Reverse provided direction components of circle upon collision with screen edges
 function Circle:handleScreenCollision()
-    if self.x - self.radius <= 0 then
+    if self.x - self.radius <= CameraScreenXZero then
         self.x = self.radius
         self.dx = -self.dx
         WallBounceSfx:play()
@@ -51,7 +51,7 @@ function Circle:handleScreenCollision()
         WallBounceSfx:play()
     end
 
-    if self.y - self.radius <= 0 then
+    if self.y - self.radius <= CameraScreenYZero then
         self.y = self.radius
         self.dy = -self.dy
         WallBounceSfx:play()
