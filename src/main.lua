@@ -39,12 +39,12 @@ local ScreenHeight = love.graphics.getHeight()
 
 local BushImg = love.graphics.newImage("visual/bush.png")
 local BushScale = 0.025
-local MaxBushCount = 10
+local MaxBushCount = 30
 
 local PartyRadius = 25
 local PartyColor = White
 local GlobalSpeedMod = 10
-local GlobalSpeed = 50
+local GlobalSpeed = 0
 local InitGlobalSpeedModRate = 21
 local InitPartyHealth = 5
 local DebugPartyHealth = 9999
@@ -87,6 +87,7 @@ function love.load()
 	CameraScreenHeight = ScreenHeight
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
+	CameraMoveZone = false
 	Score = 0
 	-- TODO have a func that sets all vars relavant to debug modes or not
 	if DebugMode then
@@ -105,7 +106,6 @@ function love.load()
 	ShakeDuration = 0
 	ShakeWait = 0
 	ShakeOffset = {x = 0, y = 0}
-
 
 	FireballTimer = FireballSpawnRate
 	CurrFireballRadius = 0
@@ -130,10 +130,6 @@ end
 function love.update(dt)
 	-- Get position of mouse
 	MousePos.x, MousePos.y = love.mouse.getPosition()
-
-	-- Spawn and move bushes
-	bushManager()
-	moveBushes(dt)
 
 	-- Screenshake
 	if ShakeDuration > 0 then
@@ -175,7 +171,7 @@ function love.update(dt)
 		FireballTimer  = FireballTimer - dt
 	end
 	if EnemyTimer <= 0 then
-		-- spawnEnemy()
+		spawnEnemy()
 		EnemyTimer = EnemySpawnRate
 	else
 		EnemyTimer  = EnemyTimer - dt
@@ -260,13 +256,19 @@ function love.update(dt)
 		end
 	end
 
+	-- Spawn and move bushes
+	bushManager()
+
 	-- Update values based off player's direction of travel
-	CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
-	CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
-	CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
-	CameraScreenYZero = CameraScreenYZero + Party.speed * Party.dy * dt
-	Fence.x = Fence.x + Party.speed * Party.dx * dt
-	Fence.y = Fence.y + Party.speed * Party.dy * dt
+	if CameraMoveZone then
+		CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
+		CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
+		CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
+		CameraScreenYZero = CameraScreenYZero + Party.speed * Party.dy * dt
+		Fence.x = Fence.x + Party.speed * Party.dx * dt
+		Fence.y = Fence.y + Party.speed * Party.dy * dt
+		moveBushes(dt)
+	end
 
 	-- Check if game over
 	if PartyHealth <= 0 then
@@ -275,7 +277,9 @@ function love.update(dt)
 end
 
 function love.draw()
-	love.graphics.translate(-Party.x + ScreenWidth / 2, -Party.y + ScreenHeight / 2)
+	if CameraMoveZone then
+		love.graphics.translate(-Party.x + ScreenWidth / 2, -Party.y + ScreenHeight / 2)
+	end
 
 	-- Screenshake
 	-- From sheepolution
