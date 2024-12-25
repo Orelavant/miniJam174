@@ -122,7 +122,7 @@ function love.load()
 
 	-- Init objs
 	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
-	initBushSpawn()
+	-- initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
 end
@@ -256,8 +256,6 @@ function love.update(dt)
 		end
 	end
 
-	-- Spawn and move bushes
-	bushManager()
 
 	-- Update values based off player's direction of travel
 	if CameraMoveZone then
@@ -267,6 +265,9 @@ function love.update(dt)
 		CameraScreenYZero = CameraScreenYZero + Party.speed * Party.dy * dt
 		Fence.x = Fence.x + Party.speed * Party.dx * dt
 		Fence.y = Fence.y + Party.speed * Party.dy * dt
+
+		-- Spawn and move bushes
+		-- bushManager()
 		moveBushes(dt)
 	end
 
