@@ -1,13 +1,14 @@
 local Circle = require "entities.circle"
+local Utils = require "utils"
 
 ---@class Enemy:Circle
 local Enemy = Circle:extend()
 
 -- Local config
 local speed = 65
-local boostValue = 40
+local boostValue = 65
 local dizzyTimer = 3
-local boostDecayTime = 2
+local boostDecayTime = 3
 local boostDecayPerSecond = boostValue / boostDecayTime
 local color = Orange
 
@@ -16,7 +17,6 @@ function Enemy:new(x, y, dx, dy, radius)
     self.dizzy = false
     self.dizzyTimer = dizzyTimer
     self.boostDecayTimer = 0
-    --- TODO temp fix since boost is being applied multiple times for some reason
     self.boostApplied = false
 end
 
@@ -25,18 +25,18 @@ function Enemy:update(dt)
         self.dizzyTimer = dizzyTimer
 
         -- Target the party by getting the angle toward them
-        local angle = math.atan2(Party.y - self.y, Party.x - self.x)
-        self.dx = math.cos(angle)
-        self.dy = math.sin(angle)
+        self.dx, self.dy = Utils.getSourceTargetAngleComponents(self.x, self.y, Party.x, Party.y)
     else
         -- Only dizzy till dizzyTimer is up
         self.dizzyTimer = self.dizzyTimer - dt
-        if self.dizzyTimer < 0 then
+
+        if self.dizzyTimer <= 0 then
             self.dizzy = false
         end
     end
 
     self:decayBoost(dt)
+
     Enemy.super.update(self, dt)
 end
 
@@ -50,10 +50,12 @@ function Enemy:applyBoost()
     self.boostApplied = true
 end
 
+-- investigate why this is being called when it shouldn't be
 function Enemy:decayBoost(dt)
     if self.boostDecayTimer > 0 then
         local sub = boostDecayPerSecond * dt
         self.speed = self.speed - sub
+        self.boostDecayTimer = self.boostDecayTimer - dt
     else
         self.boostApplied = false
     end

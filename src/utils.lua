@@ -33,4 +33,11 @@ function utils.getSourceTargetAngleComponents(sourceX, sourceY, targetX, targetY
     return math.cos(angle), math.sin(angle)
 end
 
+function utils.normalizeVectors(dx, dy)
+    -- Normalize the direction vector (dx, dy) to have a magnitude of 1
+    local magnitude = math.sqrt(dx^2 + dy^2)
+
+    return dx / magnitude, dy / magnitude
+end
+
 return utils

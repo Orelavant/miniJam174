@@ -6,8 +6,6 @@ local Point = Object:extend()
 function Point:new(x, y, color)
     self.x = x
     self.y = y
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
     self.color = color
 end
 

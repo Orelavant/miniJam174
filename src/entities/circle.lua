@@ -1,5 +1,7 @@
 
+-- Imports
 local Point = require "entities.point"
+local Utils = require "utils"
 
 ---@class Circle:Point
 local Circle = Point:extend()
@@ -9,10 +11,7 @@ CIRCLE_TYPES = {party=0, enemy=1, fireball=2, heal=3}
 ---Constructor
 function Circle:new(x, y, dx, dy, radius, speed, color, type)
     Circle.super.new(self, x, y, color)
-    -- Normalize the direction vector (dx, dy) to have a magnitude of 1
-    local magnitude = math.sqrt(dx^2 + dy^2)
-    self.dx = dx / magnitude
-    self.dy = dy / magnitude
+    self.dx, self.dy = Utils.normalizeVectors(dx, dy)
     self.radius = radius
     self.speed = speed
     self.type = type
@@ -30,6 +29,11 @@ function Circle:update(dt)
 end
 
 function Circle:draw()
+    -- Debug to see where circles are traveling
+    if DebugMode then
+        love.graphics.line(self.x, self.y, self.x + (self.dx * self.speed * 0.25), self.y + (self.dy * self.speed * 0.25))
+    end
+
     love.graphics.setColor(self.color)
 	love.graphics.circle("line", self.x, self.y, self.radius)
     love.graphics.setColor(White)
@@ -37,24 +41,22 @@ end
 
 --- Reverse provided direction components of circle upon collision with screen edges
 function Circle:handleScreenCollision()
-    -- Collision on x axis
-    if self.x - self.radius < 0 then
-        self.x = self.radius -- Push circle out of the left wall
+    if self.x - self.radius <= CameraScreenXZero then
+        self.x = self.radius
         self.dx = -self.dx
         WallBounceSfx:play()
-    elseif self.x + self.radius > self.screenWidth then
-        self.x = self.screenWidth - self.radius -- Push circle out of the right wall
+    elseif self.x + self.radius >= CameraScreenWidth then
+        self.x = CameraScreenWidth - self.radius
         self.dx = -self.dx
         WallBounceSfx:play()
     end
 
-    -- Collision on y axis
-    if self.y - self.radius < 0 then
-        self.y = self.radius -- Push circle out of the top wall
+    if self.y - self.radius <= CameraScreenYZero then
+        self.y = self.radius
         self.dy = -self.dy
         WallBounceSfx:play()
-    elseif self.y + self.radius > self.screenHeight then
-        self.y = self.screenHeight - self.radius -- Push circle out of the bottom wall
+    elseif self.y + self.radius >= CameraScreenHeight then
+        self.y = CameraScreenHeight - self.radius
         self.dy = -self.dy
         WallBounceSfx:play()
     end

@@ -21,16 +21,16 @@ function Rectangle:handleScreenCollision()
 	local rightEdge = self.x + self.width
 	local bottomEdge = self.y + self.height
 
-	if rightEdge > self.screenWidth then
-		self.x = self.screenWidth - self.width
-	elseif self.x < 0 then
-		self.x = 0
+	if rightEdge > CameraScreenWidth then
+		self.x = CameraScreenWidth - self.width
+	elseif self.x <= CameraScreenXZero then
+		self.x = CameraScreenXZero
 	end
 
-	if bottomEdge > self.screenHeight then
-		self.y = self.screenHeight - self.height
-	elseif self.y < 1 then
-		self.y = 1
+	if bottomEdge > CameraScreenHeight then
+		self.y = CameraScreenHeight - self.height
+	elseif self.y < CameraScreenYZero + 1 then
+		self.y = CameraScreenYZero + 1
 	end
 
 	return self
