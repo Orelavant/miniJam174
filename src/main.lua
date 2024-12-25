@@ -44,6 +44,7 @@ local MaxBushCount = 30
 local PartyRadius = 25
 local PartyColor = White
 local GlobalSpeedMod = 10
+local DebugGlobalSpeed = 30
 local GlobalSpeed = 0
 local InitGlobalSpeedModRate = 21
 local InitPartyHealth = 5
@@ -55,31 +56,27 @@ local FenceY = ScreenHeight / 2 - 150
 
 local EnemyRadius = 15
 local EnemySpawnBuffer = 5
-local EnemySpawnLocations = {
-	{x=ScreenWidth / 2, y=EnemyRadius},
-	{x=EnemyRadius + EnemySpawnBuffer, y=ScreenHeight / 2},
-	{x=ScreenWidth - EnemyRadius - EnemySpawnBuffer, y=ScreenHeight / 2},
-	{x=ScreenWidth / 2, y=ScreenHeight - EnemyRadius - EnemySpawnBuffer}
-}
 local EnemySpawnRate = 10
 
 local FireballColor = Red
 local FireballRadius = 10
 local FireballSpeed = 150
-local FireballSpawnRate = 7
-local FireballDecay = FireballSpawnRate * 1.5
+local FireballSpawnRate = 10
+local FireballDecay = FireballSpawnRate * 2
 local HealColor = Green
 local HealRadius = 20
 local HealSpeed = 150
-local HealSpawnRate = 13
+local HealSpawnRate = 20
 local HealDecay = HealSpawnRate * 2
 
 
 -- Callbacks
 function love.load()
 	-- Audio
-	Song:setLooping(true)
-	Song:play()
+	if not DebugMode then
+		Song:setLooping(true)
+		Song:play()
+	end
 
 	-- Globals
 	GameState = GAME_STATES.play
@@ -87,15 +84,16 @@ function love.load()
 	CameraScreenHeight = ScreenHeight
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
-	CameraMoveZone = false
+	CameraMove = false
 	Score = 0
 	-- TODO have a func that sets all vars relavant to debug modes or not
 	if DebugMode then
 		PartyHealth = DebugPartyHealth
+		PartySpeed = DebugGlobalSpeed
 	else
 		PartyHealth = InitPartyHealth
+		PartySpeed = GlobalSpeed
 	end
-	PartySpeed = GlobalSpeed
 	PartyTimer = InitGlobalSpeedModRate
 	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
@@ -116,6 +114,7 @@ function love.load()
 
 	-- Init classes
 	CircleInit = require "entities.circle"
+	RectangleInit = require "entities.rectangle"
 	EnemyInit = require "entities.enemy"
 	ProjectileInit = require "entities.projectile"
 	local FenceInit = require "entities.fence"
@@ -125,6 +124,7 @@ function love.load()
 	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
+	Rect =  RectangleInit(100, 100, 25, 100, White)
 end
 
 function love.update(dt)
@@ -221,7 +221,7 @@ function love.update(dt)
 
 			if enemy:checkCircleCollision(projectile) then
 				-- Remove from table
-				table.remove(TableOfProjectiles, j)
+				-- table.remove(TableOfProjectiles, j)
 
 				-- Resolve effect
 				if projectile.type == CIRCLE_TYPES.Fireball then
@@ -260,7 +260,7 @@ function love.update(dt)
 	bushManager()
 
 	-- Update values based off player's direction of travel
-	if CameraMoveZone then
+	if CameraMove then
 		CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
 		CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
 		CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
@@ -277,7 +277,7 @@ function love.update(dt)
 end
 
 function love.draw()
-	if CameraMoveZone then
+	if CameraMove then
 		love.graphics.translate(-Party.x + ScreenWidth / 2, -Party.y + ScreenHeight / 2)
 	end
 
@@ -308,7 +308,8 @@ function love.draw()
 	drawChargeAnimation(CurrHealRadius, HealColor)
 	drawChargeAnimation(CurrFireballRadius, FireballColor)
 
-	-- Draw Fence
+	-- Draw Fence and rect
+	Rect:draw()
 	Fence:draw()
 
 	-- Everything that should not be affected by translation should be drawn below
@@ -325,6 +326,12 @@ function love.draw()
 	local healthString = "Health: " .. PartyHealth
 	love.graphics.print(healthString, ScreenWidth-string.len(healthString) * 7, 0, 0, 1, 1)
 	love.graphics.print("Score: " .. Score, 0, 0, 0, 1, 1)
+
+	if DebugMode then
+		love.graphics.print(Fence.x, 0, 20, 0, 1, 1)
+		love.graphics.print(Fence.y, 0, 40, 0, 1, 1)
+	end
+
 end
 
 function love.keypressed(key)
@@ -403,7 +410,14 @@ function spawnHeal()
 end
 
 function spawnEnemy()
-	local spawn = EnemySpawnLocations[love.math.random(1, #EnemySpawnLocations)]
+	local enemySpawnLocations = {
+		{x=CameraScreenWidth / 2, y=EnemyRadius},
+		{x=EnemyRadius + EnemySpawnBuffer, y=CameraScreenHeight / 2},
+		{x=CameraScreenWidth - EnemyRadius - EnemySpawnBuffer, y=CameraScreenHeight / 2},
+		{x=CameraScreenWidth / 2, y=CameraScreenHeight - EnemyRadius - EnemySpawnBuffer}
+	}
+
+	local spawn = enemySpawnLocations[love.math.random(1, #enemySpawnLocations)]
 	local enemy = EnemyInit(
 		spawn.x,
 		spawn.y,
@@ -436,11 +450,12 @@ function initBushSpawn()
 end
 
 function bushManager()
+	local bushOffset = 5
 	-- Remove bushes when they go off screen
 	for i=#TableOfBushes,1,-1 do
 		local bush = TableOfBushes[i]
 
-		if bush.x <= CameraScreenXZero or bush.x >= CameraScreenWidth or bush.y <= CameraScreenYZero or bush.y >= CameraScreenHeight then
+		if bush.x + bushOffset <= CameraScreenXZero or bush.x - bushOffset >= CameraScreenWidth or bush.y + bushOffset <= CameraScreenYZero or bush.y - bushOffset >= CameraScreenHeight then
 			table.remove(TableOfBushes, i)
 		end
 	end

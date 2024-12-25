@@ -37,7 +37,7 @@ function Enemy:update(dt)
 
     self:decayBoost(dt)
 
-    Enemy.super.update(self, dt)
+    self:update(dt)
 end
 
 function Enemy:setDizzy(boolean)

@@ -36,6 +36,14 @@
             "title": "To-Do",
             "tasks": [
                 {
+                    "text": "Consider redoing collision in bump or box2d",
+                    "id": "pljsvxbwyksbym6xgagdg0g5"
+                },
+                {
+                    "text": "Rotating at 45 degree angles",
+                    "id": "twywsd1cpxsf3wldc5bfli4z"
+                },
+                {
                     "text": "Try it so that the camera doesn't quite update until party reaches edges of screen?",
                     "id": "zrt60mosc3mqayr0p88x0oe2"
                 },
@@ -287,5 +295,5 @@
     ],
     "autosave": true,
     "saveToFile": true,
-    "timestamp": 1735103454725
+    "timestamp": 1735160708579
 }
