@@ -121,7 +121,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, 1, 0, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
