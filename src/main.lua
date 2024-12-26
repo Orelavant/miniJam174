@@ -45,10 +45,12 @@ local PartyRadius = 25
 local PartyColor = White
 local GlobalSpeedMod = 10
 local GlobalSpeed = 0
+local DebugGlobalSpeed = 60
 local InitGlobalSpeedModRate = 21
 local InitPartyHealth = 5
 local DebugPartyHealth = 9999
 local GlobalSpeedModRate = 25
+
 
 local FenceX = ScreenWidth / 2
 local FenceY = ScreenHeight / 2 - 150
@@ -87,15 +89,18 @@ function love.load()
 	CameraScreenHeight = ScreenHeight
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
-	CameraMoveZone = false
+	CameraMove = false
+	CameraMoveZone = CameraScreenWidth - CameraScreenWidth / 3
+
 	Score = 0
 	-- TODO have a func that sets all vars relavant to debug modes or not
 	if DebugMode then
 		PartyHealth = DebugPartyHealth
+		PartySpeed = DebugGlobalSpeed
 	else
 		PartyHealth = InitPartyHealth
+		PartySpeed = GlobalSpeed
 	end
-	PartySpeed = GlobalSpeed
 	PartyTimer = InitGlobalSpeedModRate
 	TableOfProjectiles = {} ---@type Projectile[]
 	TableOfEnemies = {} ---@type Enemy[]
@@ -121,7 +126,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, 1, 1, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
@@ -158,19 +163,19 @@ function love.update(dt)
 	end
 
 	-- Spawn timers
-	if HealTimer <= 0 then
+	if HealTimer <= 0 and not DebugMode then
 		spawnHeal()
 		HealTimer = HealSpawnRate
 	else
 		HealTimer = HealTimer - dt
 	end
-	if FireballTimer <= 0 then
+	if FireballTimer <= 0 and not DebugMode then
 		spawnFireball()
 		FireballTimer = FireballSpawnRate
 	else
 		FireballTimer  = FireballTimer - dt
 	end
-	if EnemyTimer <= 0 then
+	if EnemyTimer <= 0 and not DebugMode then
 		spawnEnemy()
 		EnemyTimer = EnemySpawnRate
 	else
@@ -183,6 +188,13 @@ function love.update(dt)
 	-- Update party and fence collision
 	Party:update(dt)
 	Party = Fence:handleCircleCollision(Party)
+
+	-- Move camera if party is on the right quarter of the screen
+	if Party.x > CameraMoveZone then
+		CameraMove = true
+	else
+		CameraMove = false
+	end
 
 	-- Update projectiles
 	for i=#TableOfProjectiles,1,-1 do
@@ -258,7 +270,7 @@ function love.update(dt)
 
 
 	-- Update values based off player's direction of travel
-	if CameraMoveZone then
+	if CameraMove then
 		CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
 		CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
 		CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
@@ -267,7 +279,7 @@ function love.update(dt)
 		Fence.y = Fence.y + Party.speed * Party.dy * dt
 
 		-- Spawn and move bushes
-		bushManager()
+		-- bushManager()
 		moveBushes(dt)
 	end
 
@@ -278,8 +290,8 @@ function love.update(dt)
 end
 
 function love.draw()
-	if CameraMoveZone then
-		love.graphics.translate(-Party.x + ScreenWidth / 2, -Party.y + ScreenHeight / 2)
+	if CameraMove then
+		love.graphics.translate(-Party.x + CameraMoveZone, -Party.y + ScreenHeight - ScreenHeight / 3)
 	end
 
 	-- Screenshake
@@ -293,7 +305,7 @@ function love.draw()
 
 	-- Draw Bushes
 	for _, bush in ipairs(TableOfBushes) do
-		drawBush(bush)
+		-- drawBush(bush)
 	end
 
 	-- Draw Circles
