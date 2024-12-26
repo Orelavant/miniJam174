@@ -12,6 +12,7 @@ CIRCLE_TYPES = {party=0, enemy=1, fireball=2, heal=3}
 function Circle:new(x, y, dx, dy, radius, speed, color, type)
     Circle.super.new(self, x, y, color)
     self.dx, self.dy = Utils.normalizeVectors(dx, dy)
+	print(self.dx, self.dy)
     self.radius = radius
     self.speed = speed
     self.type = type

@@ -36,21 +36,22 @@ Orange = {1, 0.647, 0, 0.8}
 
 local ScreenWidth = love.graphics.getWidth()
 local ScreenHeight = love.graphics.getHeight()
+local InitCameraMoveTimer = 5
 
 local BushImg = love.graphics.newImage("visual/bush.png")
 local BushScale = 0.025
+local BushOffset = 10
 local MaxBushCount = 30
 
 local PartyRadius = 25
 local PartyColor = White
 local GlobalSpeedMod = 10
 local GlobalSpeed = 0
-local DebugGlobalSpeed = 60
+local DebugGlobalSpeed = 100
 local InitGlobalSpeedModRate = 21
 local InitPartyHealth = 5
 local DebugPartyHealth = 9999
 local GlobalSpeedModRate = 25
-
 
 local FenceX = ScreenWidth / 2
 local FenceY = ScreenHeight / 2 - 150
@@ -89,8 +90,14 @@ function love.load()
 	CameraScreenHeight = ScreenHeight
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
+	PartyXPositionAtStartOfCamMove = 0
+	PartyYPositionAtStartOfCamMove = 0
+	PartyXPositionAtEndOfCamMove = 0
+	PartyYPositionAtEndOfCamMove = 0
 	CameraMove = false
-	CameraMoveZone = CameraScreenWidth - CameraScreenWidth / 3
+	CameraMoveStart = true
+	CameraMoveTimer = InitCameraMoveTimer
+	CameraMoveZone = CameraScreenWidth - CameraScreenWidth / 4
 
 	Score = 0
 	-- TODO have a func that sets all vars relavant to debug modes or not
@@ -126,7 +133,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, 1, 1, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
@@ -192,8 +199,24 @@ function love.update(dt)
 	-- Move camera if party is on the right quarter of the screen
 	if Party.x > CameraMoveZone then
 		CameraMove = true
-	else
-		CameraMove = false
+		if CameraMoveStart then
+			PartyXPositionAtStartOfCamMove = Party.x
+			PartyYPositionAtStartOfCamMove = Party.y
+			CameraMoveStart = false
+		end
+	end
+	
+	-- Temp, stop camera move after a certain amount of time
+	if not CameraMoveStart then
+		CameraMoveTimer = CameraMoveTimer - dt
+		if CameraMoveTimer <= 0 then
+			CameraMove = false
+			CameraMoveStart = true
+			CameraMoveTimer = InitCameraMoveTimer
+			CameraMoveZone = CameraScreenWidth - CameraScreenWidth / 4
+			PartyXPositionAtEndOfCamMove = Party.x
+			PartyYPositionAtEndOfCamMove = Party.y
+		end
 	end
 
 	-- Update projectiles
@@ -279,7 +302,7 @@ function love.update(dt)
 		Fence.y = Fence.y + Party.speed * Party.dy * dt
 
 		-- Spawn and move bushes
-		-- bushManager()
+		bushManager()
 		moveBushes(dt)
 	end
 
@@ -291,7 +314,9 @@ end
 
 function love.draw()
 	if CameraMove then
-		love.graphics.translate(-Party.x + CameraMoveZone, -Party.y + ScreenHeight - ScreenHeight / 3)
+		love.graphics.translate(-Party.x + PartyXPositionAtStartOfCamMove, -Party.y + PartyYPositionAtStartOfCamMove)
+	else
+		love.graphics.translate(PartyXPositionAtEndOfCamMove, PartyYPositionAtEndOfCamMove)
 	end
 
 	-- Screenshake
@@ -305,8 +330,11 @@ function love.draw()
 
 	-- Draw Bushes
 	for _, bush in ipairs(TableOfBushes) do
-		-- drawBush(bush)
+		drawBush(bush)
 	end
+
+	-- Draw party spawnCone
+	
 
 	-- Draw Circles
 	Party:draw()
@@ -458,44 +486,34 @@ function bushManager()
 		end
 	end
 
+	-- TODO calculate this instead of using table?
 	-- X edge of screen table, then Y edge of screen table
-	-- Organized by quadrants if you start in top left and travel in Z formation between quadrants
-	-- TODO test if this needs to be here or can go up above and values in table are also updated
-	-- TODO uncommented code is here if the direction of the party can change (for example, if they move slightly faster than the camera)
-	-- TODO COULD DO CALCULATED SPAWN RANGE INSTEAD? THINK ABOUT THAT. SO THAT IF NOT TRAVELING TOWARDS CORNER< SPAWNS ALONG SCREEN EDGE ISNTEAD
-	local cameraScreenXZeroPlusOne = CameraScreenXZero + 10
-	local cameraScreenYZeroPlusOne = CameraScreenYZero + 10
+	-- Starting from right edge of screen, to right edge and bottom edge, then bottom edge, etc.
+	local cameraScreenXZeroBushOffset = CameraScreenXZero + BushOffset
+	local cameraScreenYZeroBushOffset = CameraScreenYZero + BushOffset
+	local cameraScreenWidthBushOffset = CameraScreenWidth - BushOffset
+	local cameraScreenHeightBushOffset = CameraScreenHeight - BushOffset
 	local BushSpawnTable = {
 		{
-			{love.math.random(cameraScreenXZeroPlusOne, CameraScreenWidth / 2), cameraScreenYZeroPlusOne},
-			{love.math.random(CameraScreenWidth / 2, CameraScreenWidth), cameraScreenYZeroPlusOne},
-			{love.math.random(cameraScreenXZeroPlusOne, CameraScreenWidth / 2), CameraScreenHeight},
-			{love.math.random(CameraScreenWidth / 2, CameraScreenWidth), CameraScreenHeight},
+			{cameraScreenWidthBushOffset, love.math.random(cameraScreenYZeroBushOffset, cameraScreenHeightBushOffset)},
+			{love.math.random(cameraScreenXZeroBushOffset, cameraScreenWidthBushOffset), cameraScreenHeightBushOffset},
 		},
 		{
-			{cameraScreenXZeroPlusOne, love.math.random(cameraScreenYZeroPlusOne, CameraScreenHeight / 2)},
-			{cameraScreenXZeroPlusOne, love.math.random(CameraScreenHeight / 2, CameraScreenHeight)},
-			{CameraScreenWidth, love.math.random(cameraScreenYZeroPlusOne, CameraScreenHeight / 2)},
-			{CameraScreenWidth, love.math.random(CameraScreenHeight / 2, CameraScreenHeight)},
+			{cameraScreenWidthBushOffset, love.math.random(cameraScreenYZeroBushOffset, cameraScreenHeightBushOffset)},
+			{cameraScreenWidthBushOffset, love.math.random(cameraScreenYZeroBushOffset, cameraScreenHeightBushOffset)},
 		}
 	}
 
 	-- Spawning based off of party direction of travel
 	-- We only want to spawn on edges of screen, so this var decides that
 	local xOrYEdgeSpawn = love.math.random(2)
-	-- TODO if jsut traveling to right, then use this inteasd
-	-- if #TableOfBushes <= MaxBushCount then
-	-- 	spawnBush(CameraScreenWidth, love.math.random(CameraScreenHeight), BushScale)
-	-- end
 	if #TableOfBushes <= MaxBushCount then
-		if Party.dx <= 0 and Party.dy <= 0 then
+		-- Right edge of screen
+		if Party.dx >= 0.8 then
 			spawnBush(BushSpawnTable[xOrYEdgeSpawn][1][1], BushSpawnTable[xOrYEdgeSpawn][1][2], BushScale)
-		elseif Party.dx >= 0 and Party.dy <= 0 then
+		-- Right and bottom edge of screen
+		elseif Party.dx < 0.8 and Party.dy > 0 then
 			spawnBush(BushSpawnTable[xOrYEdgeSpawn][2][1], BushSpawnTable[xOrYEdgeSpawn][2][2], BushScale)
-		elseif Party.dx >= 0 and Party.dy >= 0 then
-			spawnBush(BushSpawnTable[xOrYEdgeSpawn][3][1], BushSpawnTable[xOrYEdgeSpawn][3][2], BushScale)
-		else
-			spawnBush(BushSpawnTable[xOrYEdgeSpawn][4][1], BushSpawnTable[xOrYEdgeSpawn][4][2], BushScale)
 		end
 	end
 end
