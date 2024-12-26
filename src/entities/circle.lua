@@ -1,4 +1,3 @@
-
 -- Imports
 local Point = require "entities.point"
 local Utils = require "utils"
@@ -60,6 +59,22 @@ function Circle:handleScreenCollision()
         self.dy = -self.dy
         WallBounceSfx:play()
     end
+end
+
+function Circle:handleCircleCollision(circle)
+    -- Calculate the distance between the two circles
+    local dx = circle.x - self.x
+    local dy = circle.y - self.y
+    local distance = math.sqrt(dx^2 + dy^2)
+
+    -- Check if the circles are colliding
+    if distance < (self.radius + circle.radius) then
+        -- Reverse the direction of the other circle
+        circle.dx = -circle.dx
+        circle.dy = -circle.dy
+    end
+
+    return circle
 end
 
 function Circle:checkCircleCollision(circle)

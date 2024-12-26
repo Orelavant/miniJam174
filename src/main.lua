@@ -66,12 +66,12 @@ local EnemySpawnRate = 10
 local FireballColor = Red
 local FireballRadius = 10
 local FireballSpeed = 150
-local FireballSpawnRate = 7
-local FireballDecay = FireballSpawnRate * 1.5
+local FireballSpawnRate = 10
+local FireballDecay = FireballSpawnRate * 2
 local HealColor = Green
 local HealRadius = 20
 local HealSpeed = 150
-local HealSpawnRate = 13
+local HealSpawnRate = 17
 local HealDecay = HealSpawnRate * 2
 
 
@@ -82,12 +82,13 @@ function love.load()
 	Song:play()
 
 	-- Globals
+	RotateFenceCircles = false
 	GameState = GAME_STATES.play
 	CameraScreenWidth = ScreenWidth
 	CameraScreenHeight = ScreenHeight
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
-	CameraMoveZone = false
+	CameraMove = false
 	Score = 0
 	-- TODO have a func that sets all vars relavant to debug modes or not
 	if DebugMode then
@@ -122,14 +123,33 @@ function love.load()
 
 	-- Init objs
 	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
-	-- initBushSpawn()
+	initBushSpawn()
 
+	-- Trying new fence
 	Fence = FenceInit(FenceX, FenceY)
+	FenceCircles = {}
+	for i=1,30 do
+		local offset = i * 5
+		local circle = CircleInit(FenceX + offset, FenceY, Utils.randFloat(), Utils.randFloat(), 5, 0, LightBlue, CIRCLE_TYPES.party)
+		table.insert(FenceCircles, circle)
+	end
 end
 
 function love.update(dt)
 	-- Get position of mouse
 	MousePos.x, MousePos.y = love.mouse.getPosition()
+
+	-- Update fence circles to follow mouse
+	for i, circle in ipairs(FenceCircles) do
+		local offset = i * 5
+		if RotateFenceCircles then
+			circle.x = MousePos.x + offset
+			circle.y = MousePos.y + offset
+		else
+			circle.x = MousePos.x + offset
+			circle.y = MousePos.y
+		end
+	end
 
 	-- Screenshake
 	if ShakeDuration > 0 then
@@ -243,11 +263,19 @@ function love.update(dt)
 
 		enemy:update(dt)
 
-		-- Fence collision
-		if Fence:circleCollided(enemy) then
-			enemy = Fence:handleCircleCollision(enemy)
-			enemy:setDizzy(true)
+		-- Enemy collision with FenceCircles
+		for _, circle in ipairs(FenceCircles) do
+			if enemy:checkCircleCollision(circle) then
+				enemy = circle:handleCircleCollision(enemy)
+				enemy:setDizzy(true)
+			end
 		end
+
+		-- Fence collision
+		-- if Fence:circleCollided(enemy) then
+		-- 	enemy = Fence:handleCircleCollision(enemy)
+		-- 	enemy:setDizzy(true)
+		-- end
 
 		-- Party collision
 		if Party:checkCircleCollision(enemy) then
@@ -258,7 +286,7 @@ function love.update(dt)
 
 
 	-- Update values based off player's direction of travel
-	if CameraMoveZone then
+	if CameraMove then
 		CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
 		CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
 		CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
@@ -267,7 +295,7 @@ function love.update(dt)
 		Fence.y = Fence.y + Party.speed * Party.dy * dt
 
 		-- Spawn and move bushes
-		-- bushManager()
+		bushManager()
 		moveBushes(dt)
 	end
 
@@ -278,7 +306,7 @@ function love.update(dt)
 end
 
 function love.draw()
-	if CameraMoveZone then
+	if CameraMove then
 		love.graphics.translate(-Party.x + ScreenWidth / 2, -Party.y + ScreenHeight / 2)
 	end
 
@@ -289,6 +317,11 @@ function love.draw()
 		-- This second translate will be done based on the previous translate.
 		-- So it will not reset the previous translate.
 		love.graphics.translate(love.math.random(-5,5), love.math.random(-5,5))
+	end
+
+	-- Draw fence circles
+	for _, circle in ipairs(FenceCircles) do
+		circle:draw()
 	end
 
 	-- Draw Bushes
@@ -335,7 +368,7 @@ function love.keypressed(key)
 	end
 	
 	if key == "space" then
-		Fence:rotate()
+		rotateFenceCircles()
 	end
 
 	-- Debugging spawns
@@ -507,6 +540,10 @@ function resetGame()
 	GameState = GAME_STATES.done
 	Song:stop()
 	love.load()
+end
+
+function rotateFenceCircles()
+	RotateFenceCircles = not RotateFenceCircles
 end
 
 -- -- make error handling nice

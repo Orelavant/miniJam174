@@ -34,9 +34,7 @@ function Fence:update(mouseDown, mouseX, mouseY, dt)
 
 		-- TODO make getting angle a util function
 		-- Based off the distance and direction of the mouse movement, move the fence
-		local angle = math.atan2(mouseY - MouseDragStart.y, mouseX - MouseDragStart.x)
-		local cos = math.cos(angle)
-		local sin = math.sin(angle)
+		local cos, sin = Utils.getSourceTargetAngleComponents(MouseDragStart.x, MouseDragStart.y, mouseX, mouseY)
 		local distance = Utils.getDistance(MouseDragStart.x, MouseDragStart.y, mouseX, mouseY)
 
 		-- Update fence position
