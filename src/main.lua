@@ -122,7 +122,7 @@ function love.load()
 
 	-- Init objs
 	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
-	-- initBushSpawn()
+	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
 end
@@ -267,7 +267,7 @@ function love.update(dt)
 		Fence.y = Fence.y + Party.speed * Party.dy * dt
 
 		-- Spawn and move bushes
-		-- bushManager()
+		bushManager()
 		moveBushes(dt)
 	end
 
