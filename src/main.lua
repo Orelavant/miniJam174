@@ -133,7 +133,7 @@ function love.load()
 	local FenceInit = require "entities.fence"
 
 	-- Init objs
-	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, Utils.randFloat(), Utils.randFloat(), PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
+	Party = CircleInit(ScreenWidth / 2, ScreenHeight / 2, 1, 0, PartyRadius, PartySpeed, PartyColor, CIRCLE_TYPES.party)
 	initBushSpawn()
 
 	Fence = FenceInit(FenceX, FenceY)
@@ -314,6 +314,8 @@ end
 
 function love.draw()
 	if CameraMove then
+		-- TODO HOW TO TRANSLATE ONLY IN THE X DIRECTION
+		print(-Party.x + PartyXPositionAtStartOfCamMove)
 		love.graphics.translate(-Party.x + PartyXPositionAtStartOfCamMove, -Party.y + PartyYPositionAtStartOfCamMove)
 	else
 		love.graphics.translate(PartyXPositionAtEndOfCamMove, PartyYPositionAtEndOfCamMove)
