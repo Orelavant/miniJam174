@@ -36,7 +36,7 @@ Orange = {1, 0.647, 0, 0.8}
 
 local ScreenWidth = love.graphics.getWidth()
 local ScreenHeight = love.graphics.getHeight()
-local InitCameraMoveTimer = 5
+local InitCameraMoveDist = 100
 
 local BushImg = love.graphics.newImage("visual/bush.png")
 local BushScale = 0.025
@@ -47,7 +47,7 @@ local PartyRadius = 25
 local PartyColor = White
 local GlobalSpeedMod = 10
 local GlobalSpeed = 0
-local DebugGlobalSpeed = 100
+local DebugGlobalSpeed = 50
 local InitGlobalSpeedModRate = 21
 local InitPartyHealth = 5
 local DebugPartyHealth = 9999
@@ -87,6 +87,7 @@ function love.load()
 	-- Globals
 	GameState = GAME_STATES.play
 	CameraScreenWidth = ScreenWidth
+	print("CamScreenWidth" .. CameraScreenWidth)
 	CameraScreenHeight = ScreenHeight
 	CameraScreenXZero = 0
 	CameraScreenYZero = 0
@@ -96,7 +97,7 @@ function love.load()
 	PartyYPositionAtEndOfCamMove = 0
 	CameraMove = false
 	CameraMoveStart = true
-	CameraMoveTimer = InitCameraMoveTimer
+	CameraMoveDist = InitCameraMoveDist
 	CameraMoveZone = CameraScreenWidth - CameraScreenWidth / 4
 
 	Score = 0
@@ -196,29 +197,6 @@ function love.update(dt)
 	Party:update(dt)
 	Party = Fence:handleCircleCollision(Party)
 
-	-- Move camera if party is on the right quarter of the screen
-	if Party.x > CameraMoveZone then
-		CameraMove = true
-		if CameraMoveStart then
-			PartyXPositionAtStartOfCamMove = Party.x
-			PartyYPositionAtStartOfCamMove = Party.y
-			CameraMoveStart = false
-		end
-	end
-	
-	-- Temp, stop camera move after a certain amount of time
-	if not CameraMoveStart then
-		CameraMoveTimer = CameraMoveTimer - dt
-		if CameraMoveTimer <= 0 then
-			CameraMove = false
-			CameraMoveStart = true
-			CameraMoveTimer = InitCameraMoveTimer
-			CameraMoveZone = CameraScreenWidth - CameraScreenWidth / 4
-			PartyXPositionAtEndOfCamMove = Party.x
-			PartyYPositionAtEndOfCamMove = Party.y
-		end
-	end
-
 	-- Update projectiles
 	for i=#TableOfProjectiles,1,-1 do
 		local projectile = TableOfProjectiles[i]
@@ -291,9 +269,46 @@ function love.update(dt)
 		end
 	end
 
+	-- Move camera if party is in camera move zone
+	if Party.x > CameraMoveZone then
+		CameraMove = true
 
-	-- Update values based off player's direction of travel
+		-- Record position of party at start of camera move
+		if CameraMoveStart then
+			PartyXPositionAtStartOfCamMove = Party.x
+			PartyYPositionAtStartOfCamMove = Party.y
+			CameraMoveStart = false
+		end
+	end
+	
+	-- Stop camera move after a certain amount of distance
 	if CameraMove then
+		-- Sub how much the party has moved since last frame
+		CameraMoveDist = CameraMoveDist - (Party.speed * Party.dx * dt)
+		print("CameraMoveDist" .. CameraMoveDist)
+
+		-- Once camera has moved a certain distance, make a new arena
+		if CameraMoveDist <= 0 then
+			-- Get position of party at end of camera move
+			PartyXPositionAtEndOfCamMove = Party.x
+			PartyYPositionAtEndOfCamMove = Party.y
+
+			-- Update camera values for new arena
+			CameraScreenWidth = CameraScreenWidth + ScreenWidth
+			CameraScreenXZero = PartyXPositionAtEndOfCamMove
+			CameraScreenHeight = CameraScreenHeight + ScreenHeight
+			CameraScreenYZero = PartyYPositionAtEndOfCamMove
+			CameraMoveDist = InitCameraMoveDist
+			CameraMoveZone = CameraScreenWidth - ((CameraScreenWidth - PartyXPositionAtEndOfCamMove) / 4)
+
+			print("NewCameraMoveZone " .. CameraMoveZone, CameraScreenWidth, PartyXPositionAtEndOfCamMove)
+
+			-- Reset camera move values
+			CameraMove = false
+			CameraMoveStart = true
+		end
+
+		-- Update values based off player's direction of travel
 		CameraScreenWidth = CameraScreenWidth + Party.speed * Party.dx * dt
 		CameraScreenXZero = CameraScreenXZero + Party.speed * Party.dx * dt
 		CameraScreenHeight = CameraScreenHeight + Party.speed * Party.dy * dt
@@ -301,9 +316,8 @@ function love.update(dt)
 		Fence.x = Fence.x + Party.speed * Party.dx * dt
 		Fence.y = Fence.y + Party.speed * Party.dy * dt
 
-		-- Spawn and move bushes
+		-- Spawn bushes when cam is moving 
 		bushManager()
-		moveBushes(dt)
 	end
 
 	-- Check if game over
@@ -315,10 +329,16 @@ end
 function love.draw()
 	if CameraMove then
 		-- TODO HOW TO TRANSLATE ONLY IN THE X DIRECTION
-		print(-Party.x + PartyXPositionAtStartOfCamMove)
-		love.graphics.translate(-Party.x + PartyXPositionAtStartOfCamMove, -Party.y + PartyYPositionAtStartOfCamMove)
+		print("Cam moving: " .. Party.x)
+		love.graphics.translate(-Party.x + PartyXPositionAtStartOfCamMove, 0)
 	else
-		love.graphics.translate(PartyXPositionAtEndOfCamMove, PartyYPositionAtEndOfCamMove)
+		print("Cam not moving: " .. Party.x)
+		love.graphics.translate(-PartyXPositionAtEndOfCamMove, 0)
+	end
+
+	if DebugMode then
+		love.graphics.line(CameraMoveZone, 0, CameraMoveZone, ScreenHeight)
+		love.graphics.line(CameraScreenWidth, 0, CameraScreenWidth, ScreenHeight)
 	end
 
 	-- Screenshake
@@ -334,9 +354,6 @@ function love.draw()
 	for _, bush in ipairs(TableOfBushes) do
 		drawBush(bush)
 	end
-
-	-- Draw party spawnCone
-	
 
 	-- Draw Circles
 	Party:draw()
@@ -541,7 +558,7 @@ function resetGame()
 	love.load()
 end
 
--- -- make error handling nice
+-- make error handling nice
 local love_errorhandler = love.errorhandler
 function love.errorhandler(msg)
 	if lldebugger then
